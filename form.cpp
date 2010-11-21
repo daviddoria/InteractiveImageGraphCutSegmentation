@@ -1,7 +1,25 @@
+/*
+Copyright (C) 2010 David Doria, daviddoria@gmail.com
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include "form.h"
 
 // ITK
 #include <itkImageFileReader.h>
+#include <itkImageFileWriter.h>
 #include <itkImageRegionConstIteratorWithIndex.h>
 
 // VTK
@@ -24,6 +42,7 @@ Form::Form(QWidget *parent)
   connect( this->radForeground, SIGNAL( clicked() ), this, SLOT(radForeground_clicked()) );
   connect( this->radBackground, SIGNAL( clicked() ), this, SLOT(radBackground_clicked()) );
   connect( this->btnCut, SIGNAL( clicked() ), this, SLOT(btnCut_clicked()));
+  connect( this->btnSave, SIGNAL( clicked() ), this, SLOT(btnSave_clicked()));
   connect( this->btnClearSelections, SIGNAL( clicked() ), this, SLOT(btnClearSelections_clicked()));
   connect( this->sldHistogramBins, SIGNAL( valueChanged(int) ), this, SLOT(sldHistogramBins_valueChanged()));
   connect( this->sldLambda, SIGNAL( valueChanged(int) ), this, SLOT(UpdateLambda()));
@@ -94,6 +113,19 @@ void Form::btnClearSelections_clicked()
   this->GraphCutStyle->ClearSelections();
 }
 
+void Form::btnSave_clicked()
+{
+  // Set a filename to save
+  QString fileName = QFileDialog::getSaveFileName(this,
+     tr("Open Image"), "/home/doriad", tr("Image Files (*.png *.jpg *.bmp)"));
+
+  typedef  itk::ImageFileWriter< GrayscaleImageType > WriterType;
+  WriterType::Pointer writer = WriterType::New();
+  writer->SetFileName(fileName.toStdString());
+  writer->SetInput(this->GraphCut->GetSegmentMask());
+  writer->Update();
+}
+
 void Form::btnCut_clicked()
 {
   this->progressBar->show();
@@ -139,7 +171,9 @@ void Form::OpenFile()
     return;
     }
 
-  std::cout << "Got filename: " << filename.toStdString() << std::endl;
+  //std::cout << "Got filename: " << filename.toStdString() << std::endl;
+
+  this->GraphCutStyle->ClearSelections();
 
   // Read file
   typedef itk::ImageFileReader<TImageType> ReaderType;
