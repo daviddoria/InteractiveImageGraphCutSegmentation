@@ -47,6 +47,8 @@ Form::Form(QWidget *parent)
   connect( this->sldHistogramBins, SIGNAL( valueChanged(int) ), this, SLOT(sldHistogramBins_valueChanged()));
   connect( this->sldLambda, SIGNAL( valueChanged(int) ), this, SLOT(UpdateLambda()));
   connect( this->txtLambdaMax, SIGNAL( textEdited(QString) ), this, SLOT(UpdateLambda()));
+  connect(&ProgressThread, SIGNAL(StartProgressSignal()), this, SLOT(StartProgressSlot()), Qt::QueuedConnection);
+  connect(&ProgressThread, SIGNAL(StopProgressSignal()), this, SLOT(StopProgressSlot()), Qt::QueuedConnection);
 
   this->progressBar->setMinimum(0);
   this->progressBar->setMaximum(0);
@@ -77,6 +79,27 @@ Form::Form(QWidget *parent)
   this->radForeground->setChecked(true);
 
   this->GraphCut = NULL;
+}
+
+
+void Form::StartProgressSlot()
+{
+  this->progressBar->show();
+}
+
+void Form::StopProgressSlot()
+{
+  vtkSmartPointer<vtkImageData> VTKSegmentMask =
+    vtkSmartPointer<vtkImageData>::New();
+  ITKImagetoVTKImage<GrayscaleImageType>(this->GraphCut->GetSegmentMask(), VTKSegmentMask);
+  this->ResultActor = vtkSmartPointer<vtkImageActor>::New();
+  this->ResultActor->SetInput(VTKSegmentMask);
+  this->RightRenderer->RemoveAllViewProps();
+  this->RightRenderer->AddActor(ResultActor);
+  this->RightRenderer->ResetCamera();
+  this->Refresh();
+
+  this->progressBar->hide();
 }
 
 float Form::ComputeLambda()
@@ -128,13 +151,16 @@ void Form::btnSave_clicked()
 
 void Form::btnCut_clicked()
 {
-  this->progressBar->show();
-
   this->GraphCut->SetLambda(ComputeLambda());
   this->GraphCut->SetSources(this->GraphCutStyle->GetForegroundSelection());
   this->GraphCut->SetSinks(this->GraphCutStyle->GetBackgroundSelection());
-  this->GraphCut->PerformSegmentation();
+  //this->GraphCut->PerformSegmentation();
 
+  this->ProgressThread.GraphCut = this->GraphCut;
+  ProgressThread.start();
+  //ProgressThread.wait();
+
+  /*
   vtkSmartPointer<vtkImageData> VTKSegmentMask =
     vtkSmartPointer<vtkImageData>::New();
   ITKImagetoVTKImage<GrayscaleImageType>(this->GraphCut->GetSegmentMask(), VTKSegmentMask);
@@ -144,8 +170,7 @@ void Form::btnCut_clicked()
   this->RightRenderer->AddActor(ResultActor);
   this->RightRenderer->ResetCamera();
   this->Refresh();
-
-  this->progressBar->hide();
+  */
 }
 
 void Form::actionOpen_Grayscale_Image_triggered()

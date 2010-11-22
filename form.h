@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "vtkGraphCutInteractorStyle.h"
 #include "ImageGraphCutBase.h"
 #include "ImageGraphCut.h"
+#include "ProgressThread.h"
 
 // VTK
 #include <vtkSmartPointer.h>
@@ -53,8 +54,12 @@ public slots:
     void radBackground_clicked();
     void sldHistogramBins_valueChanged();
     void UpdateLambda();
+    void StartProgressSlot();
+    void StopProgressSlot();
 
 protected:
+  CProgressThread ProgressThread;
+
   float ComputeLambda();
 
   template<typename TImageType>
@@ -77,6 +82,5 @@ protected:
 // Helpers
 template <typename TImageType>
 void ITKImagetoVTKImage(typename TImageType::Pointer image, vtkImageData* outputImage);
-//void ITKImagetoVTKImage(GrayscaleImageType::Pointer image, vtkImageData* outputImage);
 
 #endif

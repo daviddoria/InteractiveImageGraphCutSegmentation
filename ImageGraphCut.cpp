@@ -60,9 +60,7 @@ template <typename TImageType>
 void ImageGraphCut<TImageType>::CutGraph()
 {
   // Compute max-flow
-  std::cout << "Cutting graph..." << std::endl;
   this->Graph->maxflow();
-  std::cout << "Finished cutting graph." << std::endl;
 
   itk::ImageRegionConstIterator<NodeImageType> nodeImageIterator(this->NodeImage, this->NodeImage->GetLargestPossibleRegion());
   nodeImageIterator.GoToBegin();
