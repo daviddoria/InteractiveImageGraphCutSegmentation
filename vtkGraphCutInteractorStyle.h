@@ -15,17 +15,33 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/*
+ * This class is responsible for the user interaction with the input image.
+ * A vtkImageTracerWidget does most of the work, but this class appends and maintains
+ * the selections.
+*/
+
 #ifndef vtkGraphCutInteractorStyle_H
 #define vtkGraphCutInteractorStyle_H
 
+#include <vtkImageTracerWidget.h>
 #include <vtkInteractorStyleImage.h> // superclass
 #include <vtkSmartPointer.h>
 
 #include "ImageGraphCut.h"
 
 class vtkImageActor;
-class vtkImageTracerWidget;
 class vtkImageData;
+
+// This class is supposed to disable the straight line segment tracing style, but it does not work.
+class vtkSimpleImageTracerWidget : public vtkImageTracerWidget
+{
+public:
+  static vtkSimpleImageTracerWidget* New();
+  vtkTypeMacro(vtkSimpleImageTracerWidget, vtkImageTracerWidget);
+
+  void AddObservers();
+};
 
 class vtkGraphCutInteractorStyle : public vtkInteractorStyleImage
 {
@@ -54,7 +70,8 @@ private:
 
   int SelectionType;
 
-  vtkSmartPointer<vtkImageTracerWidget> Tracer;
+  //vtkSmartPointer<vtkImageTracerWidget> Tracer;
+  vtkSmartPointer<vtkSimpleImageTracerWidget> Tracer;
   vtkSmartPointer<vtkImageData> ResultImage;
   vtkSmartPointer<vtkPolyData> ForegroundSelection;
   vtkSmartPointer<vtkPolyData> BackgroundSelection;

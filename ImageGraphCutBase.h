@@ -55,34 +55,56 @@ class ImageGraphCutBase
 public:
   ImageGraphCutBase();
 
-  // Non type dependent
+  // Return a list of the selected (via scribbling) pixels
   std::vector<itk::Index<2> > GetSources();
   std::vector<itk::Index<2> > GetSinks();
 
+  // Set the selected (via scribbling) pixels
   void SetSources(vtkPolyData* sources);
   void SetSinks(vtkPolyData* sinks);
 
+  // Get the output of the segmentation
   MaskImageType::Pointer GetSegmentMask();
+
+  // Set the weight between the regional and boundary terms
   void SetLambda(float);
+
+  // Set the number of bins per dimension of the foreground and background histograms
   void SetNumberOfHistogramBins(int);
+
+  // The main driver function
   virtual void PerformSegmentation() = 0;
 
 protected:
+
+  // A Kolmogorov graph object
   GraphType* Graph;
 
-  MaskImageType::Pointer SegmentMask; // The output segmentation
+  // The output segmentation
+  MaskImageType::Pointer SegmentMask;
 
-  std::vector<itk::Index<2> > Sources; // User specified foreground points
-  std::vector<itk::Index<2> > Sinks; // User specified background points
+  // User specified foreground points
+  std::vector<itk::Index<2> > Sources;
 
-  float Lambda; // The weighting between unary and binary terms
+  // User specified background points
+  std::vector<itk::Index<2> > Sinks;
+
+  // The weighting between unary and binary terms
+  float Lambda;
+
+  // The number of bins per dimension of the foreground and background histograms
   int NumberOfHistogramBins;
 
+  // An image which keeps tracks of the mapping between pixel index and graph node id
   NodeImageType::Pointer NodeImage;
 
+  // Determine if a number is NaN
   bool IsNaN(const double a);
 
+  // Create the graph structure and weight the edges
   virtual void CreateGraph() = 0;
+
+  // Perform an s-t min cut on the graph
   virtual void CutGraph() = 0;
 };
 

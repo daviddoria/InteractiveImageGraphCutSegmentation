@@ -150,8 +150,14 @@
       <height>111</height>
      </rect>
     </property>
+    <property name="styleSheet">
+     <string notr="true">border: 2px solid gray;</string>
+    </property>
     <property name="title">
      <string>Lambda</string>
+    </property>
+    <property name="flat">
+     <bool>false</bool>
     </property>
     <widget class="QLabel" name="label_3">
      <property name="geometry">

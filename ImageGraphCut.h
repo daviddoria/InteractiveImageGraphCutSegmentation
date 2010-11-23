@@ -61,8 +61,6 @@ protected:
   template <typename TPixelType>
   float PixelDifference(TPixelType, TPixelType);
 
-  float FindMinNonZeroHistogramValue(const HistogramType* histogram);
-
   // Member variables
   typename SampleType::Pointer ForegroundSample;
   typename SampleType::Pointer BackgroundSample;

@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <vtkActor.h>
 #include <vtkAppendPolyData.h>
+#include <vtkCallbackCommand.h>
 #include <vtkCommand.h>
 #include <vtkImageActor.h>
 #include <vtkImageData.h>
@@ -32,11 +33,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <vtkRenderWindowInteractor.h>
 
 vtkStandardNewMacro(vtkGraphCutInteractorStyle);
+vtkStandardNewMacro(vtkSimpleImageTracerWidget);
 
 vtkGraphCutInteractorStyle::vtkGraphCutInteractorStyle()
 {
   // Initializations
-  this->Tracer = vtkSmartPointer<vtkImageTracerWidget>::New();
+  //this->Tracer = vtkSmartPointer<vtkImageTracerWidget>::New();
+  this->Tracer = vtkSmartPointer<vtkSimpleImageTracerWidget>::New();
   this->Tracer->GetLineProperty()->SetLineWidth(5);
   this->ResultImage = vtkSmartPointer<vtkImageData>::New();
 
@@ -57,8 +60,6 @@ vtkGraphCutInteractorStyle::vtkGraphCutInteractorStyle()
   this->BackgroundSelectionActor->GetProperty()->SetLineWidth(4);
   this->BackgroundSelectionActor->GetProperty()->SetColor(1,0,0);
   this->BackgroundSelectionMapper->SetInputConnection(this->BackgroundSelection->GetProducerPort());
-
-  //this->ResultActor = vtkSmartPointer<vtkImageActor>::New();
 
   this->Tracer->AddObserver(vtkCommand::EndInteractionEvent, this, &vtkGraphCutInteractorStyle::CatchWidgetEvent);
 
@@ -89,6 +90,9 @@ void vtkGraphCutInteractorStyle::InitializeTracer(vtkImageActor* imageActor)
   this->Tracer->ProjectToPlaneOn();
 
   this->Tracer->On();
+
+  this->Interactor->RemoveObserver(vtkCommand::MiddleButtonPressEvent);
+  this->Interactor->RemoveObserver(vtkCommand::MiddleButtonReleaseEvent);
 }
 
 void vtkGraphCutInteractorStyle::SetInteractionModeToForeground()
@@ -110,17 +114,21 @@ void vtkGraphCutInteractorStyle::CatchWidgetEvent(vtkObject* caller, long unsign
   this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(BackgroundSelectionActor);
   this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(ForegroundSelectionActor);
 
-  vtkImageTracerWidget* tracer =
-    static_cast<vtkImageTracerWidget*>(caller);
+  // Get the tracer object (this is the object that triggered this event)
+  vtkSimpleImageTracerWidget* tracer =
+    static_cast<vtkSimpleImageTracerWidget*>(caller);
 
+  // Get the points in the selection
   vtkSmartPointer<vtkPolyData> path =
     vtkSmartPointer<vtkPolyData>::New();
   tracer->GetPath(path);
 
+  // Create a filter which will be used to combine the most recent selection with previous selections
   vtkSmartPointer<vtkAppendPolyData> appendFilter =
     vtkSmartPointer<vtkAppendPolyData>::New();
   appendFilter->AddInputConnection(path->GetProducerPort());
 
+  // If we are in foreground mode, add the current selection to the foreground. Else, add it to the background.
   if(this->SelectionType == vtkGraphCutInteractorStyle::FOREGROUND)
     {
     appendFilter->AddInputConnection(this->ForegroundSelection->GetProducerPort());
@@ -134,6 +142,9 @@ void vtkGraphCutInteractorStyle::CatchWidgetEvent(vtkObject* caller, long unsign
     this->BackgroundSelection->ShallowCopy(appendFilter->GetOutput());
     }
 
+  // "Clear" the tracer. We must rely on the foreground and background actors to maintain the appropriate colors.
+  // If we did not clear the tracer, if we draw a foreground stroke (green) then switch to background mode, the last stoke would turn
+  // red until we finished drawing the next stroke.
   vtkSmartPointer<vtkPoints> emptyPoints =
     vtkSmartPointer<vtkPoints>::New();
   emptyPoints->InsertNextPoint(0, 0, 0);
@@ -173,4 +184,23 @@ void vtkGraphCutInteractorStyle::ClearSelections()
 
   this->Refresh();
 
+}
+
+void vtkSimpleImageTracerWidget::AddObservers(void)
+{
+  // Listen for the following events
+  vtkRenderWindowInteractor *i = this->Interactor;
+  if (i)
+    {
+    i->AddObserver(vtkCommand::MouseMoveEvent, this->EventCallbackCommand,
+                   this->Priority);
+    i->AddObserver(vtkCommand::LeftButtonPressEvent,
+                   this->EventCallbackCommand, this->Priority);
+    i->AddObserver(vtkCommand::LeftButtonReleaseEvent,
+                   this->EventCallbackCommand, this->Priority);
+    i->AddObserver(vtkCommand::RightButtonPressEvent,
+                   this->EventCallbackCommand, this->Priority);
+    i->AddObserver(vtkCommand::RightButtonReleaseEvent,
+                   this->EventCallbackCommand, this->Priority);
+    }
 }

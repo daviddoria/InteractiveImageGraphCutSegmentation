@@ -17,11 +17,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "ImageGraphCut.h"
 
+// ITK
 #include "itkImageRegionIterator.h"
 #include "itkShapedNeighborhoodIterator.h"
 
+// STL
 #include <cmath>
 
+// VTK
 #include <vtkImageData.h>
 #include <vtkMath.h>
 #include <vtkPolyData.h>
@@ -30,9 +33,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ImageGraphCutBase::ImageGraphCutBase()
 {
+  // Initializations
   this->SegmentMask = MaskImageType::New();
   this->NodeImage = NodeImageType::New();
 
+  // Default values
   this->Lambda = 0.01;
   this->NumberOfHistogramBins = 10;
 }
@@ -70,6 +75,8 @@ bool ImageGraphCutBase::IsNaN(const double a)
 
 void ImageGraphCutBase::SetSources(vtkPolyData* sources)
 {
+  // Convert the vtkPolyData produced by the vtkImageTracerWidget to a list of pixel indices
+
   this->Sources.clear();
 
   for(vtkIdType i = 0; i < sources->GetNumberOfPoints(); i++)
@@ -87,6 +94,8 @@ void ImageGraphCutBase::SetSources(vtkPolyData* sources)
 
 void ImageGraphCutBase::SetSinks(vtkPolyData* sinks)
 {
+  // Convert the vtkPolyData produced by the vtkImageTracerWidget to a list of pixel indices
+
   this->Sinks.clear();
 
   for(vtkIdType i = 0; i < sinks->GetNumberOfPoints(); i++)

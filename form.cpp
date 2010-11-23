@@ -31,11 +31,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <vtkRenderWindow.h>
 #include <vtkSmartPointer.h>
 
+// Qt
 #include <QFileDialog>
 #include <QLineEdit>
+#include <QMessageBox>
 
 Form::Form(QWidget *parent)
 {
+  // Setup the GUI and connect all of the signals and slots
   setupUi(this);
   connect( this->actionOpen_Color_Image, SIGNAL( triggered() ), this, SLOT(actionOpen_Color_Image_triggered()) );
   connect( this->actionOpen_Grayscale_Image, SIGNAL( triggered() ), this, SLOT(actionOpen_Grayscale_Image_triggered()) );
@@ -50,6 +53,7 @@ Form::Form(QWidget *parent)
   connect(&ProgressThread, SIGNAL(StartProgressSignal()), this, SLOT(StartProgressSlot()), Qt::QueuedConnection);
   connect(&ProgressThread, SIGNAL(StopProgressSignal()), this, SLOT(StopProgressSlot()), Qt::QueuedConnection);
 
+  // Set the progress bar to marquee mode
   this->progressBar->setMinimum(0);
   this->progressBar->setMaximum(0);
   this->progressBar->hide();
@@ -58,7 +62,7 @@ Form::Form(QWidget *parent)
   this->OriginalImageActor = vtkSmartPointer<vtkImageActor>::New();
   this->ResultActor = vtkSmartPointer<vtkImageActor>::New();
 
-  // Add renderers
+  // Add renderers - we flip the image by changing the camera view up because of the conflicting conventions used by ITK and VTK
   this->LeftRenderer = vtkSmartPointer<vtkRenderer>::New();
   this->LeftRenderer->GetActiveCamera()->SetViewUp(0,-1,0);
   this->qvtkWidgetLeft->GetRenderWindow()->AddRenderer(this->LeftRenderer);
@@ -76,22 +80,30 @@ Form::Form(QWidget *parent)
   this->GraphCutStyle = vtkSmartPointer<vtkGraphCutInteractorStyle>::New();
   this->qvtkWidgetLeft->GetInteractor()->SetInteractorStyle(this->GraphCutStyle);
 
+  // Default GUI settings
   this->radForeground->setChecked(true);
 
+  // Instantiations
   this->GraphCut = NULL;
 }
 
 
 void Form::StartProgressSlot()
 {
+  // Connected to the StartProgressSignal of the ProgressThread member
   this->progressBar->show();
 }
 
 void Form::StopProgressSlot()
 {
+  // When the ProgressThread emits the StopProgressSignal, we need to display the result of the segmentation
+
+  // Convert the segment mask image into a VTK image for display
   vtkSmartPointer<vtkImageData> VTKSegmentMask =
     vtkSmartPointer<vtkImageData>::New();
   ITKImagetoVTKImage<GrayscaleImageType>(this->GraphCut->GetSegmentMask(), VTKSegmentMask);
+
+  // Remove the old output, set the new output and refresh everything
   this->ResultActor = vtkSmartPointer<vtkImageActor>::New();
   this->ResultActor->SetInput(VTKSegmentMask);
   this->RightRenderer->RemoveAllViewProps();
@@ -104,14 +116,18 @@ void Form::StopProgressSlot()
 
 float Form::ComputeLambda()
 {
+  // Compute lambda by multiplying the percentage set by the slider by the MaxLambda set in the text box
+
   double lambdaMax = this->txtLambdaMax->text().toDouble();
   double lambdaPercent = this->sldLambda->value()/100.;
   double lambda = lambdaPercent * lambdaMax;
+
   return lambda;
 }
 
 void Form::UpdateLambda()
 {
+  // Compute lambda and then set the label to this value so the user can see the current setting
   double lambda = ComputeLambda();
   this->lblLambda->setText(QString::number(lambda));
 }
@@ -138,10 +154,11 @@ void Form::btnClearSelections_clicked()
 
 void Form::btnSave_clicked()
 {
-  // Set a filename to save
+  // Ask the user for a filename to save the segment mask image to
   QString fileName = QFileDialog::getSaveFileName(this,
      tr("Open Image"), "/home/doriad", tr("Image Files (*.png *.jpg *.bmp)"));
 
+  // Write the file
   typedef  itk::ImageFileWriter< GrayscaleImageType > WriterType;
   WriterType::Pointer writer = WriterType::New();
   writer->SetFileName(fileName.toStdString());
@@ -151,35 +168,37 @@ void Form::btnSave_clicked()
 
 void Form::btnCut_clicked()
 {
+  // Get the number of bins from the slider
+  this->GraphCut->SetNumberOfHistogramBins(this->sldHistogramBins->value());
+
+  if(this->sldLambda->value() == 0)
+    {
+    QMessageBox msgBox;
+    msgBox.setText("You must select lambda > 0!");
+    msgBox.exec();
+    return;
+    }
+
+  // Setup the graph cut from the GUI and the scribble selection
   this->GraphCut->SetLambda(ComputeLambda());
   this->GraphCut->SetSources(this->GraphCutStyle->GetForegroundSelection());
   this->GraphCut->SetSinks(this->GraphCutStyle->GetBackgroundSelection());
-  //this->GraphCut->PerformSegmentation();
 
+  // Setup and start the actual cut computation in a different thread
   this->ProgressThread.GraphCut = this->GraphCut;
   ProgressThread.start();
-  //ProgressThread.wait();
 
-  /*
-  vtkSmartPointer<vtkImageData> VTKSegmentMask =
-    vtkSmartPointer<vtkImageData>::New();
-  ITKImagetoVTKImage<GrayscaleImageType>(this->GraphCut->GetSegmentMask(), VTKSegmentMask);
-  this->ResultActor = vtkSmartPointer<vtkImageActor>::New();
-  this->ResultActor->SetInput(VTKSegmentMask);
-  this->RightRenderer->RemoveAllViewProps();
-  this->RightRenderer->AddActor(ResultActor);
-  this->RightRenderer->ResetCamera();
-  this->Refresh();
-  */
 }
 
 void Form::actionOpen_Grayscale_Image_triggered()
 {
+  // Instantiate everything to use grayscale images and grayscale histograms
   OpenFile<GrayscaleImageType>();
 }
 
 void Form::actionOpen_Color_Image_triggered()
 {
+  // Instantiate everything to use color images and color histograms
   OpenFile<ColorImageType>();
 }
 
@@ -192,12 +211,10 @@ void Form::OpenFile()
 
   if(filename.isEmpty())
     {
-    std::cout << "Cancelled." << std::endl;
     return;
     }
 
-  //std::cout << "Got filename: " << filename.toStdString() << std::endl;
-
+  // Clear the scribbles
   this->GraphCutStyle->ClearSelections();
 
   // Read file
@@ -206,12 +223,16 @@ void Form::OpenFile()
   reader->SetFileName(filename.toStdString());
   reader->Update();
 
+  // Delete the old object if one exists
   if(this->GraphCut)
     {
     delete this->GraphCut;
     }
+
+  // Instantiate the ImageGraphCut object with the correct type
   this->GraphCut = new ImageGraphCut<TImageType>(reader->GetOutput());
 
+  // Convert the ITK image to a VTK image and display it
   vtkSmartPointer<vtkImageData> VTKImage =
     vtkSmartPointer<vtkImageData>::New();
   ITKImagetoVTKImage<TImageType>(reader->GetOutput(), VTKImage);
@@ -222,6 +243,7 @@ void Form::OpenFile()
   this->LeftRenderer->ResetCamera();
   this->Refresh();
 
+  // Setup the scribble style
   if(this->radBackground->isChecked())
     {
     this->GraphCutStyle->SetInteractionModeToBackground();
@@ -245,16 +267,16 @@ void Form::Refresh()
 template <typename TImageType>
 void ITKImagetoVTKImage(typename TImageType::Pointer image, vtkImageData* outputImage)
 {
-  // Specify the size of the image data
+  // Setup and allocate the image data
   outputImage->SetNumberOfScalarComponents(TImageType::PixelType::GetNumberOfComponents());
   outputImage->SetScalarTypeToUnsignedChar();
-
   outputImage->SetDimensions(image->GetLargestPossibleRegion().GetSize()[0],
                              image->GetLargestPossibleRegion().GetSize()[1],
                              1);
 
   outputImage->AllocateScalars();
 
+  // Copy all of the input image pixels to the output image
   itk::ImageRegionConstIteratorWithIndex<TImageType> imageIterator(image,image->GetLargestPossibleRegion());
   imageIterator.GoToBegin();
 
@@ -271,5 +293,6 @@ void ITKImagetoVTKImage(typename TImageType::Pointer image, vtkImageData* output
     }
 }
 
+// Explit instantiations
 template void ITKImagetoVTKImage<ColorImageType>(ColorImageType::Pointer, vtkImageData*);
 template void ITKImagetoVTKImage<GrayscaleImageType>(GrayscaleImageType::Pointer, vtkImageData*);
