@@ -40,6 +40,12 @@ ImageGraphCutBase::ImageGraphCutBase()
   // Default values
   this->Lambda = 0.01;
   this->NumberOfHistogramBins = 10;
+  this->PixelDimensionality = 0;
+}
+
+unsigned int ImageGraphCutBase::GetPixelDimensionality()
+{
+  return this->PixelDimensionality;
 }
 
 std::vector<itk::Index<2> > ImageGraphCutBase::GetSources()

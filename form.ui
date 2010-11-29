@@ -11,10 +11,10 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Interactive Graph Cut Segmentation</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QVTKWidget" name="qvtkWidgetLeft" native="true">
+   <widget class="QVTKWidget" name="qvtkWidgetLeft">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -24,7 +24,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QVTKWidget" name="qvtkWidgetRight" native="true">
+   <widget class="QVTKWidget" name="qvtkWidgetRight">
     <property name="geometry">
      <rect>
       <x>440</x>
@@ -151,10 +151,17 @@
      </rect>
     </property>
     <property name="styleSheet">
-     <string notr="true">border: 2px solid gray;</string>
+     <string notr="true">QGroupBox#groupBox { 
+     border: 2px solid gray; 
+     border-radius: 3px; 
+ } 
+
+QGroupBox#groupBox::title { 
+    background-color: transparent;
+ } </string>
     </property>
     <property name="title">
-     <string>Lambda</string>
+     <string/>
     </property>
     <property name="flat">
      <bool>false</bool>
@@ -287,7 +294,7 @@
      <x>0</x>
      <y>0</y>
      <width>825</width>
-     <height>25</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

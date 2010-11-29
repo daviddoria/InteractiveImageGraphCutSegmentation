@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // ITK
 #include "itkImageRegionIterator.h"
 #include "itkShapedNeighborhoodIterator.h"
+#include "itkMaskImageFilter.h"
 
 // STL
 #include <cmath>
@@ -37,6 +38,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 template <typename TImageType>
 ImageGraphCut<TImageType>::ImageGraphCut(typename TImageType::Pointer image)
 {
+  // Based on the type we have instantiated this class with, set the dimensionality of the image
+  this->PixelDimensionality = TImageType::PixelType::GetNumberOfComponents();
+  
   this->Image = TImageType::New();
   this->Image->Graft(image);
 
@@ -67,6 +71,19 @@ ImageGraphCut<TImageType>::ImageGraphCut(typename TImageType::Pointer image)
 }
 
 template <typename TImageType>
+typename TImageType::Pointer ImageGraphCut<TImageType>::GetMaskedOutput()
+{
+  // Mask the input image with the mask
+  typedef itk::MaskImageFilter< TImageType, GrayscaleImageType > MaskFilterType;
+  typename MaskFilterType::Pointer maskFilter = MaskFilterType::New();
+  maskFilter->SetInput1(this->Image);
+  maskFilter->SetInput2(this->SegmentMask);
+  maskFilter->Update();
+
+  return maskFilter->GetOutput();
+}
+
+template <typename TImageType>
 void ImageGraphCut<TImageType>::CutGraph()
 {
   // Compute max-flow
@@ -75,6 +92,7 @@ void ImageGraphCut<TImageType>::CutGraph()
   // Setup the values of the output (mask) image
   GrayscalePixelType sinkPixel;
   sinkPixel[0] = 0;
+  // NumericTraits< FrequencyType >::Zero;
 
   GrayscalePixelType sourcePixel;
   sourcePixel[0] = 255;
@@ -107,10 +125,7 @@ void ImageGraphCut<TImageType>::PerformSegmentation()
   // Ensure at least one pixel has been specified for both the foreground and background
   if((this->Sources.size() <= 0) || (this->Sinks.size() <= 0))
     {
-    //std::cout << "At least one source (foreground) pixel and one sink (background) pixel must be specified!" << std::endl;
-    QMessageBox msgBox;
-    msgBox.setText("At least one source (foreground) pixel and one sink (background) pixel must be specified!");
-    msgBox.exec();
+    std::cout << "At least one source (foreground) pixel and one sink (background) pixel must be specified!" << std::endl;
     return;
     }
 

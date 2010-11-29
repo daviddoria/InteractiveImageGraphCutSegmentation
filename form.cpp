@@ -98,11 +98,23 @@ void Form::StopProgressSlot()
 {
   // When the ProgressThread emits the StopProgressSignal, we need to display the result of the segmentation
 
-  // Convert the segment mask image into a VTK image for display
+  // Convert the masked image into a VTK image for display
   vtkSmartPointer<vtkImageData> VTKSegmentMask =
     vtkSmartPointer<vtkImageData>::New();
-  ITKImagetoVTKImage<GrayscaleImageType>(this->GraphCut->GetSegmentMask(), VTKSegmentMask);
-
+  if(this->GraphCut->GetPixelDimensionality() == 1)
+    {
+    ITKImagetoVTKImage<GrayscaleImageType>(static_cast<ImageGraphCut<GrayscaleImageType>* >(this->GraphCut)->GetMaskedOutput(), VTKSegmentMask);
+    }
+  else if(this->GraphCut->GetPixelDimensionality() == 3)
+    {
+    ITKImagetoVTKImage<ColorImageType>(static_cast<ImageGraphCut<ColorImageType>* >(this->GraphCut)->GetMaskedOutput(), VTKSegmentMask);
+    }
+  else
+    {
+    std::cerr << "This type of image (" << this->GraphCut->GetPixelDimensionality() << ") cannot be displayed!" << std::endl;
+    exit(-1);
+    }
+    
   // Remove the old output, set the new output and refresh everything
   this->ResultActor = vtkSmartPointer<vtkImageActor>::New();
   this->ResultActor->SetInput(VTKSegmentMask);
@@ -218,10 +230,13 @@ void Form::OpenFile()
   this->GraphCutStyle->ClearSelections();
 
   // Read file
-  typedef itk::ImageFileReader<TImageType> ReaderType;
-  typename ReaderType::Pointer reader = ReaderType::New();
+  typename itk::ImageFileReader<TImageType>::Pointer reader = itk::ImageFileReader<TImageType>::New();
+  
   reader->SetFileName(filename.toStdString());
   reader->Update();
+  itk::Index<2> zeroIndex;
+  zeroIndex[0] = 0;
+  zeroIndex[1] = 0;
 
   // Delete the old object if one exists
   if(this->GraphCut)
@@ -237,6 +252,9 @@ void Form::OpenFile()
     vtkSmartPointer<vtkImageData>::New();
   ITKImagetoVTKImage<TImageType>(reader->GetOutput(), VTKImage);
 
+  this->LeftRenderer->RemoveAllViewProps();
+
+  this->OriginalImageActor.TakeReference(vtkImageActor::New()); // This is leak free, but should not be necessary (once vtkImageActor component increase bug is fixed)
   this->OriginalImageActor->SetInput(VTKImage);
   this->GraphCutStyle->InitializeTracer(this->OriginalImageActor);
 
@@ -284,7 +302,7 @@ void ITKImagetoVTKImage(typename TImageType::Pointer image, vtkImageData* output
     {
     unsigned char* pixel = static_cast<unsigned char*>(outputImage->GetScalarPointer(imageIterator.GetIndex()[0],
                                                                                      imageIterator.GetIndex()[1],0));
-    for(unsigned int component = 0; component < imageIterator.Get().Size(); component++)
+    for(unsigned int component = 0; component < TImageType::PixelType::GetNumberOfComponents(); component++)
       {
       pixel[component] = static_cast<unsigned char>(imageIterator.Get()[component]);
       }

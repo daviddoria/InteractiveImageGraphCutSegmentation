@@ -33,16 +33,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class vtkImageActor;
 class vtkImageData;
 
-// This class is supposed to disable the straight line segment tracing style, but it does not work.
-class vtkSimpleImageTracerWidget : public vtkImageTracerWidget
-{
-public:
-  static vtkSimpleImageTracerWidget* New();
-  vtkTypeMacro(vtkSimpleImageTracerWidget, vtkImageTracerWidget);
-
-  void AddObservers();
-};
-
 class vtkGraphCutInteractorStyle : public vtkInteractorStyleImage
 {
 public:
@@ -60,19 +50,25 @@ public:
   vtkPolyData* GetForegroundSelection();
   vtkPolyData* GetBackgroundSelection();
 
+  // Empty both the foreground and background selection
   void ClearSelections();
 
+  // Connect the tracer to the interactor, etc.
   void InitializeTracer(vtkImageActor* imageActor);
 
 private:
   void Refresh();
+
+  // Update the selection when the EndInteraction event is fired.
   void CatchWidgetEvent(vtkObject* caller, long unsigned int eventId, void* callData);
 
+  // The state (foreground or background) of the selection.
   int SelectionType;
 
-  //vtkSmartPointer<vtkImageTracerWidget> Tracer;
-  vtkSmartPointer<vtkSimpleImageTracerWidget> Tracer;
-  vtkSmartPointer<vtkImageData> ResultImage;
+  // The widget which does most of the work.
+  vtkSmartPointer<vtkImageTracerWidget> Tracer;
+
+  // Data, mapper, and actor for the selections
   vtkSmartPointer<vtkPolyData> ForegroundSelection;
   vtkSmartPointer<vtkPolyData> BackgroundSelection;
 

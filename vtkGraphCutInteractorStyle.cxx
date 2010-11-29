@@ -33,15 +33,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <vtkRenderWindowInteractor.h>
 
 vtkStandardNewMacro(vtkGraphCutInteractorStyle);
-vtkStandardNewMacro(vtkSimpleImageTracerWidget);
 
 vtkGraphCutInteractorStyle::vtkGraphCutInteractorStyle()
 {
   // Initializations
-  //this->Tracer = vtkSmartPointer<vtkImageTracerWidget>::New();
-  this->Tracer = vtkSmartPointer<vtkSimpleImageTracerWidget>::New();
+  this->Tracer = vtkSmartPointer<vtkImageTracerWidget>::New();
   this->Tracer->GetLineProperty()->SetLineWidth(5);
-  this->ResultImage = vtkSmartPointer<vtkImageData>::New();
+  this->Tracer->HandleMiddleMouseButtonOff();
 
   // Foreground
   this->ForegroundSelection = vtkSmartPointer<vtkPolyData>::New();
@@ -61,6 +59,7 @@ vtkGraphCutInteractorStyle::vtkGraphCutInteractorStyle()
   this->BackgroundSelectionActor->GetProperty()->SetColor(1,0,0);
   this->BackgroundSelectionMapper->SetInputConnection(this->BackgroundSelection->GetProducerPort());
 
+  // Update the selection when the EndInteraction event is fired.
   this->Tracer->AddObserver(vtkCommand::EndInteractionEvent, this, &vtkGraphCutInteractorStyle::CatchWidgetEvent);
 
   // Defaults
@@ -91,8 +90,8 @@ void vtkGraphCutInteractorStyle::InitializeTracer(vtkImageActor* imageActor)
 
   this->Tracer->On();
 
-  this->Interactor->RemoveObserver(vtkCommand::MiddleButtonPressEvent);
-  this->Interactor->RemoveObserver(vtkCommand::MiddleButtonReleaseEvent);
+  //this->Interactor->RemoveObserver(vtkCommand::MiddleButtonPressEvent);
+  //this->Interactor->RemoveObserver(vtkCommand::MiddleButtonReleaseEvent);
 }
 
 void vtkGraphCutInteractorStyle::SetInteractionModeToForeground()
@@ -115,8 +114,10 @@ void vtkGraphCutInteractorStyle::CatchWidgetEvent(vtkObject* caller, long unsign
   this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(ForegroundSelectionActor);
 
   // Get the tracer object (this is the object that triggered this event)
-  vtkSimpleImageTracerWidget* tracer =
-    static_cast<vtkSimpleImageTracerWidget*>(caller);
+  //vtkSimpleImageTracerWidget* tracer =
+    //static_cast<vtkSimpleImageTracerWidget*>(caller);
+  vtkImageTracerWidget* tracer =
+    static_cast<vtkImageTracerWidget*>(caller);
 
   // Get the points in the selection
   vtkSmartPointer<vtkPolyData> path =
@@ -184,23 +185,4 @@ void vtkGraphCutInteractorStyle::ClearSelections()
 
   this->Refresh();
 
-}
-
-void vtkSimpleImageTracerWidget::AddObservers(void)
-{
-  // Listen for the following events
-  vtkRenderWindowInteractor *i = this->Interactor;
-  if (i)
-    {
-    i->AddObserver(vtkCommand::MouseMoveEvent, this->EventCallbackCommand,
-                   this->Priority);
-    i->AddObserver(vtkCommand::LeftButtonPressEvent,
-                   this->EventCallbackCommand, this->Priority);
-    i->AddObserver(vtkCommand::LeftButtonReleaseEvent,
-                   this->EventCallbackCommand, this->Priority);
-    i->AddObserver(vtkCommand::RightButtonPressEvent,
-                   this->EventCallbackCommand, this->Priority);
-    i->AddObserver(vtkCommand::RightButtonReleaseEvent,
-                   this->EventCallbackCommand, this->Priority);
-    }
 }

@@ -44,7 +44,11 @@ public:
   void SetSources(vtkPolyData* sources);
   void SetSinks(vtkPolyData* sinks);
 
+  // Create and cut the graph
   void PerformSegmentation();
+
+  // Get the masked output image
+  typename TImageType::Pointer GetMaskedOutput();
 
 protected:
 
@@ -52,10 +56,16 @@ protected:
   typedef itk::Statistics::ListSample<typename TImageType::PixelType> SampleType;
   typedef itk::Statistics::SampleToHistogramFilter<SampleType, HistogramType> SampleToHistogramFilterType;
 
+  // Create the histograms from the users selections
   void CreateSamples();
+
+  // Estimate the "camera noise"
   double ComputeNoise();
 
+  // Create a Kolmogorov graph structure from the image and selections
   void CreateGraph();
+
+  // Perform the s-t min cut
   void CutGraph();
 
   template <typename TPixelType>
@@ -71,6 +81,7 @@ protected:
   typename SampleToHistogramFilterType::Pointer ForegroundHistogramFilter;
   typename SampleToHistogramFilterType::Pointer BackgroundHistogramFilter;
 
+  // The image to be segmented
   typename TImageType::Pointer Image;
 
 };

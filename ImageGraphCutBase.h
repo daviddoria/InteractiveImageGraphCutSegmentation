@@ -75,6 +75,8 @@ public:
   // The main driver function
   virtual void PerformSegmentation() = 0;
 
+  unsigned int GetPixelDimensionality();
+
 protected:
 
   // A Kolmogorov graph object
@@ -106,6 +108,8 @@ protected:
 
   // Perform an s-t min cut on the graph
   virtual void CutGraph() = 0;
+
+  unsigned int PixelDimensionality;
 };
 
 #endif
