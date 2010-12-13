@@ -461,10 +461,10 @@ void MaskImage(vtkSmartPointer<vtkImageData> VTKImage, vtkSmartPointer<vtkImageD
         outputPixel[1] = imagePixel[1];
         outputPixel[2] = imagePixel[2];
         }
-      else
+      else // Grayscale should have all components equal to the first component
         {
-        outputPixel[1] = 0;
-        outputPixel[2] = 0;
+        outputPixel[1] = imagePixel[0];
+        outputPixel[2] = imagePixel[0];
         }
 
       if(maskPixel[0] == 0)
