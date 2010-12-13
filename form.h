@@ -56,11 +56,13 @@ public slots:
   // Menu items
   void actionOpen_Color_Image_triggered();
   void actionOpen_Grayscale_Image_triggered();
+  void actionOpen_RGBDI_Image_triggered();
+  void actionFlip_Image_triggered();
+  void actionSave_Segmentation_triggered();
 
   // Buttons, radio buttons, and sliders
   void btnClearSelections_clicked();
   void btnCut_clicked();
-  void btnSave_clicked();
   void radForeground_clicked();
   void radBackground_clicked();
   void sldHistogramBins_valueChanged();
@@ -100,6 +102,9 @@ protected:
   // The main segmentation class. This will be instantiated as a ImageGraphCut after the user selects whether to open a color or grayscale image.
   ImageGraphCutBase* GraphCut;
 
+  double BackgroundColor[3];
+  double CameraUp[3];
+
 };
 
 //////// Helpers ////////
@@ -107,5 +112,7 @@ protected:
 // Convert an ITK image to a VTK image for display
 template <typename TImageType>
 void ITKImagetoVTKImage(typename TImageType::Pointer image, vtkImageData* outputImage);
+
+void MaskImage(vtkSmartPointer<vtkImageData> VTKImage, vtkSmartPointer<vtkImageData> VTKSegmentMask, vtkSmartPointer<vtkImageData> VTKMaskedImage);
 
 #endif

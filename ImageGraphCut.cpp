@@ -40,7 +40,7 @@ ImageGraphCut<TImageType>::ImageGraphCut(typename TImageType::Pointer image)
 {
   // Based on the type we have instantiated this class with, set the dimensionality of the image
   this->PixelDimensionality = TImageType::PixelType::GetNumberOfComponents();
-  
+
   this->Image = TImageType::New();
   this->Image->Graft(image);
 
@@ -419,3 +419,4 @@ double ImageGraphCut<TImageType>::ComputeNoise()
 // Explicit template instantiations
 template class ImageGraphCut<ColorImageType>;
 template class ImageGraphCut<GrayscaleImageType>;
+template class ImageGraphCut<RGBDIImageType>;
