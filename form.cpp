@@ -18,18 +18,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "form.h"
 
 // ITK
+#include <itkCastImageFilter.h>
+#include <itkCovariantVector.h>
 #include <itkImageFileReader.h>
 #include <itkImageFileWriter.h>
 #include <itkImageRegionConstIteratorWithIndex.h>
+#include <itkLineIterator.h>
 #include <itkNthElementImageAdaptor.h>
-#include <itkCastImageFilter.h>
-#include <itkCovariantVector.h>
 
 // VTK
 #include <vtkCamera.h>
 #include <vtkImageActor.h>
 #include <vtkImageData.h>
 #include <vtkInteractorStyleImage.h>
+#include <vtkPolyData.h>
 #include <vtkRenderer.h>
 #include <vtkRenderWindow.h>
 #include <vtkSmartPointer.h>
@@ -84,6 +86,7 @@ Form::Form(QWidget *parent)
   connect( this->actionFlip_Image, SIGNAL( triggered() ), this, SLOT(actionFlip_Image_triggered()));
   connect( this->actionSave_Segmentation, SIGNAL( triggered() ), this, SLOT(actionSave_Segmentation_triggered()));
   connect( this->btnClearSelections, SIGNAL( clicked() ), this, SLOT(btnClearSelections_clicked()));
+  connect( this->btnSaveSelections, SIGNAL( clicked() ), this, SLOT(btnSaveSelections_clicked()));
   connect( this->sldHistogramBins, SIGNAL( valueChanged(int) ), this, SLOT(sldHistogramBins_valueChanged()));
   connect( this->sldLambda, SIGNAL( valueChanged(int) ), this, SLOT(UpdateLambda()));
   connect( this->txtLambdaMax, SIGNAL( textEdited(QString) ), this, SLOT(UpdateLambda()));
@@ -95,9 +98,9 @@ Form::Form(QWidget *parent)
   this->progressBar->setMaximum(0);
   this->progressBar->hide();
 
-  this->BackgroundColor[0] = 1;
-  this->BackgroundColor[1] = 1;
-  this->BackgroundColor[2] = 1;
+  this->BackgroundColor[0] = 0;
+  this->BackgroundColor[1] = 0;
+  this->BackgroundColor[2] = .5;
 
   this->CameraUp[0] = 0;
   this->CameraUp[1] = 1;
@@ -109,12 +112,16 @@ Form::Form(QWidget *parent)
 
   // Add renderers - we flip the image by changing the camera view up because of the conflicting conventions used by ITK and VTK
   this->LeftRenderer = vtkSmartPointer<vtkRenderer>::New();
+  this->LeftRenderer->GradientBackgroundOn();
   this->LeftRenderer->SetBackground(this->BackgroundColor);
+  this->LeftRenderer->SetBackground2(1,1,1);
   this->LeftRenderer->GetActiveCamera()->SetViewUp(this->CameraUp);
   this->qvtkWidgetLeft->GetRenderWindow()->AddRenderer(this->LeftRenderer);
 
   this->RightRenderer = vtkSmartPointer<vtkRenderer>::New();
+  this->RightRenderer->GradientBackgroundOn();
   this->RightRenderer->SetBackground(this->BackgroundColor);
+  this->RightRenderer->SetBackground2(1,1,1);
   this->RightRenderer->GetActiveCamera()->SetViewUp(this->CameraUp);
   this->qvtkWidgetRight->GetRenderWindow()->AddRenderer(this->RightRenderer);
 
@@ -264,6 +271,73 @@ void Form::btnClearSelections_clicked()
   this->GraphCutStyle->ClearSelections();
 }
 
+void Form::btnSaveSelections_clicked()
+{
+  QString directoryName = QFileDialog::getExistingDirectory(this,
+     "Open Directory", QDir::homePath(), QFileDialog::ShowDirsOnly);
+  
+  std::string foregroundFilename = QDir(directoryName).absoluteFilePath("foreground.png").toStdString();
+  std::string backgroundFilename = QDir(directoryName).absoluteFilePath("background.png").toStdString();
+
+  std::cout << "Writing to " << foregroundFilename << " and " << backgroundFilename << std::endl;
+
+  UnsignedCharScalarImageType::Pointer foregroundImage = UnsignedCharScalarImageType::New();
+  foregroundImage->SetRegions(this->ImageRegion);
+  foregroundImage->Allocate();
+  PolyDataToBinaryImage(this->GraphCutStyle->GetForegroundSelection(), foregroundImage);
+
+  typedef  itk::ImageFileWriter< UnsignedCharScalarImageType  > WriterType;
+  WriterType::Pointer writer = WriterType::New();
+  writer->SetFileName(foregroundFilename);
+  writer->SetInput(foregroundImage);
+  writer->Update();
+  
+  UnsignedCharScalarImageType::Pointer backgroundImage = UnsignedCharScalarImageType::New();
+  backgroundImage->SetRegions(this->ImageRegion);
+  backgroundImage->Allocate();
+  PolyDataToBinaryImage(this->GraphCutStyle->GetBackgroundSelection(), backgroundImage);
+  
+  writer->SetFileName(backgroundFilename);
+  writer->SetInput(backgroundImage);
+  writer->Update();
+}
+
+void Form::PolyDataToBinaryImage(vtkPolyData* polydata, UnsignedCharScalarImageType::Pointer image)
+{
+  // Blank the image
+  itk::ImageRegionIterator<UnsignedCharScalarImageType> imageIterator(image,image->GetLargestPossibleRegion());
+  while(!imageIterator.IsAtEnd())
+    {
+    imageIterator.Set(0);
+    ++imageIterator;
+    }
+
+  std::vector<itk::Index<2> > linePoints;
+  
+  for(vtkIdType i = 0; i < polydata->GetNumberOfPoints(); i++)
+    {
+    itk::Index<2> index;
+    double p[3];
+    polydata->GetPoint(i,p);
+    index[0] = round(p[0]);
+    index[1] = round(p[1]);
+    linePoints.push_back(index);
+    }
+
+  // Set the pixels where points are defined to 255
+  for(unsigned int i = 1; i < linePoints.size(); i++)
+    {
+    // Mark every pixel in a line between the current point and the previous point (this is why we start the loop at 1)
+    itk::LineIterator<UnsignedCharScalarImageType> lineIterator(image, linePoints[i-1], linePoints[i]);
+    lineIterator.GoToBegin();
+    while (!lineIterator.IsAtEnd())
+      {
+      lineIterator.Set(255);
+      ++lineIterator;
+      }
+    }
+}
+
 void Form::btnCut_clicked()
 {
   // Get the number of bins from the slider
@@ -301,7 +375,7 @@ void Form::actionSave_Segmentation_triggered()
   // Ask the user for a filename to save the segment mask image to
 
   QString fileName = QFileDialog::getSaveFileName(this,
-    tr("Open Image"), "/home/doriad", tr("Image Files (*.png *.bmp)"));
+    tr("Save Segment Mask Image"), "/home/doriad", tr("Image Files (*.png *.bmp)"));
 
   // Convert the image from a 1D vector image to an unsigned char image
   typedef itk::CastImageFilter< GrayscaleImageType, itk::Image<itk::CovariantVector<unsigned char, 1>, 2 > > CastFilterType;
@@ -347,7 +421,7 @@ void Form::OpenFile()
 {
   // Get a filename to open
   QString filename = QFileDialog::getOpenFileName(this,
-     tr("Open Image"), "/media/portable/Projects/src/GrabCut/data", tr("Image Files (*.png *.jpg *.bmp *.mhd)"));
+     tr("Open Image"), "/media/portable/Projects/src/InteractiveImageGraphCutSegmentation/data", tr("Image Files (*.png *.bmp *.mhd)"));
 
   if(filename.isEmpty())
     {
@@ -362,6 +436,8 @@ void Form::OpenFile()
 
   reader->SetFileName(filename.toStdString());
   reader->Update();
+
+  this->ImageRegion = reader->GetOutput()->GetLargestPossibleRegion();
 
   // Delete the old object if one exists
   if(this->GraphCut)
@@ -379,7 +455,6 @@ void Form::OpenFile()
 
   this->LeftRenderer->RemoveAllViewProps();
 
-  //this->OriginalImageActor.TakeReference(vtkImageActor::New()); // This is leak free, but should not be necessary (once vtkImageActor component increase bug is fixed)
   this->OriginalImageActor->SetInput(VTKImage);
   this->GraphCutStyle->InitializeTracer(this->OriginalImageActor);
 

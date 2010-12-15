@@ -41,8 +41,8 @@ class ImageGraphCut : public ImageGraphCutBase
 public:
   ImageGraphCut(typename TImageType::Pointer image);
 
-  void SetSources(vtkPolyData* sources);
-  void SetSinks(vtkPolyData* sinks);
+  //void SetSources(vtkPolyData* sources);
+  //void SetSinks(vtkPolyData* sinks);
 
   // Create and cut the graph
   void PerformSegmentation();

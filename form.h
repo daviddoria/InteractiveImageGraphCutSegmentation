@@ -62,6 +62,7 @@ public slots:
 
   // Buttons, radio buttons, and sliders
   void btnClearSelections_clicked();
+  void btnSaveSelections_clicked();
   void btnCut_clicked();
   void radForeground_clicked();
   void radBackground_clicked();
@@ -75,6 +76,10 @@ public slots:
   void StopProgressSlot();
 
 protected:
+
+  // Mark each pixel corresponding to a point in a polydata as a non-zero pixel in an image
+  void PolyDataToBinaryImage(vtkPolyData* polydata, UnsignedCharScalarImageType::Pointer image);
+  
   // A class to do the main computations in a separate thread so we can display a marquee progress bar.
   CProgressThread ProgressThread;
 
@@ -102,8 +107,14 @@ protected:
   // The main segmentation class. This will be instantiated as a ImageGraphCut after the user selects whether to open a color or grayscale image.
   ImageGraphCutBase* GraphCut;
 
+  // Allows the background color to be changed
   double BackgroundColor[3];
+
+  // Allows the image to be flipped so that it is "right side up"
   double CameraUp[3];
+
+  // We set this when the image is opeend. We sometimes need to know how big the image is.
+  itk::ImageRegion<2> ImageRegion;
 
 };
 

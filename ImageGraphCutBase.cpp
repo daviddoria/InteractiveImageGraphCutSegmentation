@@ -41,11 +41,19 @@ ImageGraphCutBase::ImageGraphCutBase()
   this->Lambda = 0.01;
   this->NumberOfHistogramBins = 10;
   this->PixelDimensionality = 0;
+  this->RGBWeight = 0.5;
+  //this->RGBWeight = 1.0;
+  //this->RGBWeight = 0;
 }
 
 unsigned int ImageGraphCutBase::GetPixelDimensionality()
 {
   return this->PixelDimensionality;
+}
+
+void ImageGraphCutBase::SetRGBWeight(float weight)
+{
+  this->RGBWeight = weight;
 }
 
 std::vector<itk::Index<2> > ImageGraphCutBase::GetSources()
@@ -115,4 +123,14 @@ void ImageGraphCutBase::SetSinks(vtkPolyData* sinks)
     this->Sinks.push_back(index);
     }
 
+}
+
+void ImageGraphCutBase::SetSources(std::vector<itk::Index<2> > sources)
+{
+  this->Sources = sources;
+}
+
+void ImageGraphCutBase::SetSinks(std::vector<itk::Index<2> > sinks)
+{
+  this->Sinks = sinks;
 }

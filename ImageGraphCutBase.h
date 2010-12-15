@@ -71,18 +71,25 @@ public:
   void SetSources(vtkPolyData* sources);
   void SetSinks(vtkPolyData* sinks);
 
+  void SetSources(std::vector<itk::Index<2> > sources);
+  void SetSinks(std::vector<itk::Index<2> > sinks);
+
   // Get the output of the segmentation
   MaskImageType::Pointer GetSegmentMask();
 
   // Set the weight between the regional and boundary terms
   void SetLambda(float);
 
+  // Set the weight of the RGB components of the pixels vs the rest of the components
+  void SetRGBWeight(float);
+  
   // Set the number of bins per dimension of the foreground and background histograms
   void SetNumberOfHistogramBins(int);
 
   // The main driver function
   virtual void PerformSegmentation() = 0;
 
+  // The dimensionality of the loaded image pixels
   unsigned int GetPixelDimensionality();
 
 protected:
@@ -117,7 +124,10 @@ protected:
   // Perform an s-t min cut on the graph
   virtual void CutGraph() = 0;
 
+  // The dimensionality of the loaded image pixels
   unsigned int PixelDimensionality;
+
+  float RGBWeight;
 };
 
 #endif

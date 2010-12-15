@@ -233,8 +233,7 @@ void ImageGraphCut<TImageType>::CreateGraph()
 
   // We are only using a 4-connected structure, so the kernel (iteration neighborhood) must only be 3x3 (specified by a radius of 1)
   itk::Size<2> radius;
-  radius[0] = 1;
-  radius[1] = 1;
+  radius.Fill(1);
 
   typedef itk::ShapedNeighborhoodIterator<TImageType> IteratorType;
 
@@ -352,9 +351,24 @@ float ImageGraphCut<TImageType>::PixelDifference(TPixelType a, TPixelType b)
 {
   // Compute the Euclidean distance between N dimensional pixels
   float difference = 0;
-  for(unsigned int i = 0; i < TPixelType::GetNumberOfComponents(); i++)
+
+  if(TPixelType::GetNumberOfComponents() > 3)
     {
-    difference += pow(a[i] - b[i],2);
+    for(unsigned int i = 0; i < 3; i++)
+      {
+      difference += (this->RGBWeight / 3.) * pow(a[i] - b[i],2);
+      }
+    for(unsigned int i = 3; i < TPixelType::GetNumberOfComponents(); i++)
+      {
+      difference += (1 - this->RGBWeight) / (TPixelType::GetNumberOfComponents() - 3.) * pow(a[i] - b[i],2);
+      }
+    }
+  else // image is RGB or less (grayscale)
+    {
+    for(unsigned int i = 0; i < TPixelType::GetNumberOfComponents(); i++)
+      {
+      difference += pow(a[i] - b[i],2);
+      }
     }
   return sqrt(difference);
 }
