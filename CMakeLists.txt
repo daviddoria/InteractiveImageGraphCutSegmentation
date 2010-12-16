@@ -18,9 +18,17 @@ INCLUDE( ${USE_ITK_FILE} )
 
 ADD_EXECUTABLE(InteractiveImageGraphCutSegmentation main.cpp form.cpp ProgressThread.cpp
 graph.cpp maxflow.cpp
-ImageGraphCutBase.cpp ImageGraphCut.cpp vtkGraphCutInteractorStyle.cxx
+ImageGraphCutBase.cpp ImageGraphCut.cpp vtkGraphCutInteractorStyle.cxx Helpers.cpp
 ${MOCSrcs} ${UISrcs})
 TARGET_LINK_LIBRARIES(InteractiveImageGraphCutSegmentation vtkHybrid vtkWidgets
 QVTK ${QT_LIBRARIES}
+ITKCommon ITKIO ITKStatistics
+)
+
+ADD_EXECUTABLE(NonInteractive NonInteractive.cpp
+graph.cpp maxflow.cpp
+ImageGraphCutBase.cpp ImageGraphCut.cpp Helpers.cpp
+)
+TARGET_LINK_LIBRARIES(NonInteractive vtkHybrid vtkWidgets
 ITKCommon ITKIO ITKStatistics
 )

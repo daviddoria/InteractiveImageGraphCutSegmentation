@@ -32,6 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class vtkImageActor;
 class vtkImageData;
+class vtkPolyData;
 
 class vtkGraphCutInteractorStyle : public vtkInteractorStyleImage
 {
@@ -47,8 +48,8 @@ public:
   void SetInteractionModeToForeground();
   void SetInteractionModeToBackground();
 
-  vtkPolyData* GetForegroundSelection();
-  vtkPolyData* GetBackgroundSelection();
+  std::vector<itk::Index<2> > GetForegroundSelection();
+  std::vector<itk::Index<2> > GetBackgroundSelection();
 
   // Empty both the foreground and background selection
   void ClearSelections();
@@ -68,9 +69,13 @@ private:
   // The widget which does most of the work.
   vtkSmartPointer<vtkImageTracerWidget> Tracer;
 
+  // Keep track of the pixels the user selected.
+  std::vector<itk::Index<2> > ForegroundSelection;
+  std::vector<itk::Index<2> > BackgroundSelection;
+  
   // Data, mapper, and actor for the selections
-  vtkSmartPointer<vtkPolyData> ForegroundSelection;
-  vtkSmartPointer<vtkPolyData> BackgroundSelection;
+  vtkSmartPointer<vtkPolyData> ForegroundSelectionPolyData;
+  vtkSmartPointer<vtkPolyData> BackgroundSelectionPolyData;
 
   vtkSmartPointer<vtkPolyDataMapper> BackgroundSelectionMapper;
   vtkSmartPointer<vtkPolyDataMapper> ForegroundSelectionMapper;
@@ -79,5 +84,8 @@ private:
   vtkSmartPointer<vtkActor> ForegroundSelectionActor;
 
 };
+
+// Helpers
+std::vector<itk::Index<2> > PolyDataToPixelList(vtkPolyData* polydata);
 
 #endif

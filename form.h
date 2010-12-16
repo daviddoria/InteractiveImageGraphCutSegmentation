@@ -31,6 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // ITK
 #include "itkCovariantVector.h"
 #include "itkImage.h"
+#include "itkImageRegionConstIteratorWithIndex.h"
 
 // Custom
 #include "vtkGraphCutInteractorStyle.h"
@@ -40,6 +41,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // VTK
 #include <vtkSmartPointer.h>
+#include <vtkImageData.h>
 
 // Forward declarations
 class vtkImageActor;
@@ -77,9 +79,6 @@ public slots:
 
 protected:
 
-  // Mark each pixel corresponding to a point in a polydata as a non-zero pixel in an image
-  void PolyDataToBinaryImage(vtkPolyData* polydata, UnsignedCharScalarImageType::Pointer image);
-  
   // A class to do the main computations in a separate thread so we can display a marquee progress bar.
   CProgressThread ProgressThread;
 
@@ -122,8 +121,35 @@ protected:
 
 // Convert an ITK image to a VTK image for display
 template <typename TImageType>
-void ITKImagetoVTKImage(typename TImageType::Pointer image, vtkImageData* outputImage);
+void ITKImagetoVTKImage(typename TImageType::Pointer image, vtkImageData* outputImage)
+{
+  // Setup and allocate the image data
+  outputImage->SetNumberOfScalarComponents(TImageType::PixelType::GetNumberOfComponents());
+  outputImage->SetScalarTypeToUnsignedChar();
+  outputImage->SetDimensions(image->GetLargestPossibleRegion().GetSize()[0],
+                             image->GetLargestPossibleRegion().GetSize()[1],
+                             1);
+
+  outputImage->AllocateScalars();
+
+  // Copy all of the input image pixels to the output image
+  itk::ImageRegionConstIteratorWithIndex<TImageType> imageIterator(image,image->GetLargestPossibleRegion());
+  imageIterator.GoToBegin();
+
+  while(!imageIterator.IsAtEnd())
+    {
+    unsigned char* pixel = static_cast<unsigned char*>(outputImage->GetScalarPointer(imageIterator.GetIndex()[0],
+                                                                                     imageIterator.GetIndex()[1],0));
+    for(unsigned int component = 0; component < TImageType::PixelType::GetNumberOfComponents(); component++)
+      {
+      pixel[component] = static_cast<unsigned char>(imageIterator.Get()[component]);
+      }
+
+    ++imageIterator;
+    }
+}
 
 void MaskImage(vtkSmartPointer<vtkImageData> VTKImage, vtkSmartPointer<vtkImageData> VTKSegmentMask, vtkSmartPointer<vtkImageData> VTKMaskedImage);
+
 
 #endif

@@ -16,6 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "form.h"
+#include "Helpers.h"
 
 // ITK
 #include <itkCastImageFilter.h>
@@ -42,8 +43,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMessageBox>
 
 
-// Specialization so RGBDI images are displayed using RGB only
-// This must go before the calls to this function.
+// Specializations (must go before the calls to these functions - prevents "specialization after instantiation" errors)
+// Specializationso RGBDI images are displayed using RGB only
 template <>
 void ITKImagetoVTKImage<RGBDIImageType>(RGBDIImageType::Pointer image, vtkImageData* outputImage)
 {
@@ -69,6 +70,33 @@ void ITKImagetoVTKImage<RGBDIImageType>(RGBDIImageType::Pointer image, vtkImageD
       pixel[component] = static_cast<unsigned char>(imageIterator.Get()[component]);
       }
 
+    ++imageIterator;
+    }
+}
+
+
+// Specialization for image types with pixel types without [] operator
+template <>
+void ITKImagetoVTKImage<MaskImageType>(MaskImageType::Pointer image, vtkImageData* outputImage)
+{
+ // Setup and allocate the image data
+  outputImage->SetNumberOfScalarComponents(1);
+  outputImage->SetScalarTypeToUnsignedChar();
+  outputImage->SetDimensions(image->GetLargestPossibleRegion().GetSize()[0],
+                             image->GetLargestPossibleRegion().GetSize()[1],
+                             1);
+
+  outputImage->AllocateScalars();
+
+  // Copy all of the input image pixels to the output image
+  itk::ImageRegionConstIteratorWithIndex<MaskImageType> imageIterator(image,image->GetLargestPossibleRegion());
+  imageIterator.GoToBegin();
+
+  while(!imageIterator.IsAtEnd())
+    {
+    unsigned char* pixel = static_cast<unsigned char*>(outputImage->GetScalarPointer(imageIterator.GetIndex()[0],
+                                                                                     imageIterator.GetIndex()[1],0));
+    pixel[0] = static_cast<unsigned char>(imageIterator.Get());
     ++imageIterator;
     }
 }
@@ -195,7 +223,7 @@ void Form::StopProgressSlot()
   // Convert the segmentation mask to a binary VTK image
   vtkSmartPointer<vtkImageData> VTKSegmentMask =
     vtkSmartPointer<vtkImageData>::New();
-  ITKImagetoVTKImage<GrayscaleImageType>(static_cast<ImageGraphCut<GrayscaleImageType>* >(this->GraphCut)->GetSegmentMask(), VTKSegmentMask);
+  ITKImagetoVTKImage<MaskImageType>(static_cast<ImageGraphCut<GrayscaleImageType>* >(this->GraphCut)->GetSegmentMask(), VTKSegmentMask);
 
   // Convert the image into a VTK image for display
   vtkSmartPointer<vtkImageData> VTKImage =
@@ -284,7 +312,7 @@ void Form::btnSaveSelections_clicked()
   UnsignedCharScalarImageType::Pointer foregroundImage = UnsignedCharScalarImageType::New();
   foregroundImage->SetRegions(this->ImageRegion);
   foregroundImage->Allocate();
-  PolyDataToBinaryImage(this->GraphCutStyle->GetForegroundSelection(), foregroundImage);
+  IndicesToBinaryImage(this->GraphCutStyle->GetForegroundSelection(), foregroundImage);
 
   typedef  itk::ImageFileWriter< UnsignedCharScalarImageType  > WriterType;
   WriterType::Pointer writer = WriterType::New();
@@ -295,48 +323,13 @@ void Form::btnSaveSelections_clicked()
   UnsignedCharScalarImageType::Pointer backgroundImage = UnsignedCharScalarImageType::New();
   backgroundImage->SetRegions(this->ImageRegion);
   backgroundImage->Allocate();
-  PolyDataToBinaryImage(this->GraphCutStyle->GetBackgroundSelection(), backgroundImage);
+  IndicesToBinaryImage(this->GraphCutStyle->GetBackgroundSelection(), backgroundImage);
   
   writer->SetFileName(backgroundFilename);
   writer->SetInput(backgroundImage);
   writer->Update();
 }
 
-void Form::PolyDataToBinaryImage(vtkPolyData* polydata, UnsignedCharScalarImageType::Pointer image)
-{
-  // Blank the image
-  itk::ImageRegionIterator<UnsignedCharScalarImageType> imageIterator(image,image->GetLargestPossibleRegion());
-  while(!imageIterator.IsAtEnd())
-    {
-    imageIterator.Set(0);
-    ++imageIterator;
-    }
-
-  std::vector<itk::Index<2> > linePoints;
-  
-  for(vtkIdType i = 0; i < polydata->GetNumberOfPoints(); i++)
-    {
-    itk::Index<2> index;
-    double p[3];
-    polydata->GetPoint(i,p);
-    index[0] = round(p[0]);
-    index[1] = round(p[1]);
-    linePoints.push_back(index);
-    }
-
-  // Set the pixels where points are defined to 255
-  for(unsigned int i = 1; i < linePoints.size(); i++)
-    {
-    // Mark every pixel in a line between the current point and the previous point (this is why we start the loop at 1)
-    itk::LineIterator<UnsignedCharScalarImageType> lineIterator(image, linePoints[i-1], linePoints[i]);
-    lineIterator.GoToBegin();
-    while (!lineIterator.IsAtEnd())
-      {
-      lineIterator.Set(255);
-      ++lineIterator;
-      }
-    }
-}
 
 void Form::btnCut_clicked()
 {
@@ -376,7 +369,7 @@ void Form::actionSave_Segmentation_triggered()
 
   QString fileName = QFileDialog::getSaveFileName(this,
     tr("Save Segment Mask Image"), "/home/doriad", tr("Image Files (*.png *.bmp)"));
-
+/*
   // Convert the image from a 1D vector image to an unsigned char image
   typedef itk::CastImageFilter< GrayscaleImageType, itk::Image<itk::CovariantVector<unsigned char, 1>, 2 > > CastFilterType;
   CastFilterType::Pointer castFilter = CastFilterType::New();
@@ -388,12 +381,14 @@ void Form::actionSave_Segmentation_triggered()
   ImageAdaptorType::Pointer adaptor = ImageAdaptorType::New();
   adaptor->SelectNthElement(0);
   adaptor->SetImage(castFilter->GetOutput());
-
+*/
   // Write the file
-  typedef  itk::ImageFileWriter< ImageAdaptorType > WriterType;
+  //typedef  itk::ImageFileWriter< ImageAdaptorType > WriterType;
+  typedef  itk::ImageFileWriter< MaskImageType > WriterType;
   WriterType::Pointer writer = WriterType::New();
   writer->SetFileName(fileName.toStdString());
-  writer->SetInput(adaptor);
+  //writer->SetInput(adaptor);
+  writer->SetInput(this->GraphCut->GetSegmentMask());
   writer->Update();
 
 }
@@ -482,34 +477,6 @@ void Form::Refresh()
   this->qvtkWidgetLeft->GetInteractor()->Render();
 }
 
-template <typename TImageType>
-void ITKImagetoVTKImage(typename TImageType::Pointer image, vtkImageData* outputImage)
-{
-  // Setup and allocate the image data
-  outputImage->SetNumberOfScalarComponents(TImageType::PixelType::GetNumberOfComponents());
-  outputImage->SetScalarTypeToUnsignedChar();
-  outputImage->SetDimensions(image->GetLargestPossibleRegion().GetSize()[0],
-                             image->GetLargestPossibleRegion().GetSize()[1],
-                             1);
-
-  outputImage->AllocateScalars();
-
-  // Copy all of the input image pixels to the output image
-  itk::ImageRegionConstIteratorWithIndex<TImageType> imageIterator(image,image->GetLargestPossibleRegion());
-  imageIterator.GoToBegin();
-
-  while(!imageIterator.IsAtEnd())
-    {
-    unsigned char* pixel = static_cast<unsigned char*>(outputImage->GetScalarPointer(imageIterator.GetIndex()[0],
-                                                                                     imageIterator.GetIndex()[1],0));
-    for(unsigned int component = 0; component < TImageType::PixelType::GetNumberOfComponents(); component++)
-      {
-      pixel[component] = static_cast<unsigned char>(imageIterator.Get()[component]);
-      }
-
-    ++imageIterator;
-    }
-}
 
 void MaskImage(vtkSmartPointer<vtkImageData> VTKImage, vtkSmartPointer<vtkImageData> VTKSegmentMask, vtkSmartPointer<vtkImageData> VTKMaskedImage)
 {
@@ -557,5 +524,5 @@ void MaskImage(vtkSmartPointer<vtkImageData> VTKImage, vtkSmartPointer<vtkImageD
 
 
 // Explit instantiations
-template void ITKImagetoVTKImage<ColorImageType>(ColorImageType::Pointer, vtkImageData*);
-template void ITKImagetoVTKImage<GrayscaleImageType>(GrayscaleImageType::Pointer, vtkImageData*);
+//template void ITKImagetoVTKImage<ColorImageType>(ColorImageType::Pointer, vtkImageData*);
+//template void ITKImagetoVTKImage<GrayscaleImageType>(GrayscaleImageType::Pointer, vtkImageData*);

@@ -18,6 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef IMAGEGRAPHCUTBASE_H
 #define IMAGEGRAPHCUTBASE_H
 
+#include "Types.h"
+
 // VTK
 class vtkPolyData;
 #include <vtkSmartPointer.h>
@@ -37,20 +39,6 @@ class vtkPolyData;
 typedef Graph GraphType;
 
 // Typedefs
-
-// All images are stored internally as float pixels
-typedef itk::CovariantVector<float,3> ColorPixelType;
-typedef itk::CovariantVector<float,1> GrayscalePixelType;
-typedef itk::CovariantVector<float,5> RGBDIPixelType;
-
-typedef itk::Image<ColorPixelType, 2> ColorImageType;
-typedef itk::Image<GrayscalePixelType, 2> GrayscaleImageType;
-typedef itk::Image<RGBDIPixelType, 2> RGBDIImageType;
-
-typedef itk::Image<GrayscalePixelType, 2> MaskImageType;
-
-// For writing images, we need to first convert to actual unsigned char images
-typedef itk::Image<unsigned char, 2> UnsignedCharScalarImageType;
 
 // This is a special type to keep track of the graph node labels
 typedef itk::Image<void*, 2> NodeImageType;

@@ -32,6 +32,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <vtkRenderWindow.h>
 #include <vtkRenderWindowInteractor.h>
 
+#include <itkImageRegionIterator.h>
+#include <itkBresenhamLine.h>
+
 vtkStandardNewMacro(vtkGraphCutInteractorStyle);
 
 vtkGraphCutInteractorStyle::vtkGraphCutInteractorStyle()
@@ -42,22 +45,22 @@ vtkGraphCutInteractorStyle::vtkGraphCutInteractorStyle()
   this->Tracer->HandleMiddleMouseButtonOff();
 
   // Foreground
-  this->ForegroundSelection = vtkSmartPointer<vtkPolyData>::New();
+  this->ForegroundSelectionPolyData = vtkSmartPointer<vtkPolyData>::New();
   this->ForegroundSelectionMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
   this->ForegroundSelectionActor = vtkSmartPointer<vtkActor>::New();
   this->ForegroundSelectionActor->SetMapper(this->ForegroundSelectionMapper);
   this->ForegroundSelectionActor->GetProperty()->SetLineWidth(4);
   this->ForegroundSelectionActor->GetProperty()->SetColor(0,1,0);
-  this->ForegroundSelectionMapper->SetInputConnection(this->ForegroundSelection->GetProducerPort());
+  this->ForegroundSelectionMapper->SetInputConnection(this->ForegroundSelectionPolyData->GetProducerPort());
 
   // Background
-  this->BackgroundSelection = vtkSmartPointer<vtkPolyData>::New();
+  this->BackgroundSelectionPolyData = vtkSmartPointer<vtkPolyData>::New();
   this->BackgroundSelectionMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
   this->BackgroundSelectionActor = vtkSmartPointer<vtkActor>::New();
   this->BackgroundSelectionActor->SetMapper(this->BackgroundSelectionMapper);
   this->BackgroundSelectionActor->GetProperty()->SetLineWidth(4);
   this->BackgroundSelectionActor->GetProperty()->SetColor(1,0,0);
-  this->BackgroundSelectionMapper->SetInputConnection(this->BackgroundSelection->GetProducerPort());
+  this->BackgroundSelectionMapper->SetInputConnection(this->BackgroundSelectionPolyData->GetProducerPort());
 
   // Update the selection when the EndInteraction event is fired.
   this->Tracer->AddObserver(vtkCommand::EndInteractionEvent, this, &vtkGraphCutInteractorStyle::CatchWidgetEvent);
@@ -66,12 +69,12 @@ vtkGraphCutInteractorStyle::vtkGraphCutInteractorStyle()
   this->SelectionType = FOREGROUND;
 }
 
-vtkPolyData* vtkGraphCutInteractorStyle::GetForegroundSelection()
+std::vector<itk::Index<2> > vtkGraphCutInteractorStyle::GetForegroundSelection()
 {
   return this->ForegroundSelection;
 }
 
-vtkPolyData* vtkGraphCutInteractorStyle::GetBackgroundSelection()
+std::vector<itk::Index<2> > vtkGraphCutInteractorStyle::GetBackgroundSelection()
 {
   return this->BackgroundSelection;
 }
@@ -89,9 +92,6 @@ void vtkGraphCutInteractorStyle::InitializeTracer(vtkImageActor* imageActor)
   this->Tracer->ProjectToPlaneOn();
 
   this->Tracer->On();
-
-  //this->Interactor->RemoveObserver(vtkCommand::MiddleButtonPressEvent);
-  //this->Interactor->RemoveObserver(vtkCommand::MiddleButtonReleaseEvent);
 }
 
 void vtkGraphCutInteractorStyle::SetInteractionModeToForeground()
@@ -114,8 +114,6 @@ void vtkGraphCutInteractorStyle::CatchWidgetEvent(vtkObject* caller, long unsign
   this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(ForegroundSelectionActor);
 
   // Get the tracer object (this is the object that triggered this event)
-  //vtkSimpleImageTracerWidget* tracer =
-    //static_cast<vtkSimpleImageTracerWidget*>(caller);
   vtkImageTracerWidget* tracer =
     static_cast<vtkImageTracerWidget*>(caller);
 
@@ -129,19 +127,29 @@ void vtkGraphCutInteractorStyle::CatchWidgetEvent(vtkObject* caller, long unsign
     vtkSmartPointer<vtkAppendPolyData>::New();
   appendFilter->AddInputConnection(path->GetProducerPort());
 
+  std::vector<itk::Index<2> > newPoints = PolyDataToPixelList(path);
+  //std::cout << newPoints.size() << " new points." << std::endl;
+  
   // If we are in foreground mode, add the current selection to the foreground. Else, add it to the background.
   if(this->SelectionType == vtkGraphCutInteractorStyle::FOREGROUND)
     {
-    appendFilter->AddInputConnection(this->ForegroundSelection->GetProducerPort());
+    appendFilter->AddInputConnection(this->ForegroundSelectionPolyData->GetProducerPort());
     appendFilter->Update();
-    this->ForegroundSelection->ShallowCopy(appendFilter->GetOutput());
+    this->ForegroundSelectionPolyData->ShallowCopy(appendFilter->GetOutput());
+
+    this->ForegroundSelection.insert(this->ForegroundSelection.end(), newPoints.begin(), newPoints.end());
     }
   else if(this->SelectionType == vtkGraphCutInteractorStyle::BACKGROUND)
     {
-    appendFilter->AddInputConnection(this->BackgroundSelection->GetProducerPort());
+    appendFilter->AddInputConnection(this->BackgroundSelectionPolyData->GetProducerPort());
     appendFilter->Update();
-    this->BackgroundSelection->ShallowCopy(appendFilter->GetOutput());
+    this->BackgroundSelectionPolyData->ShallowCopy(appendFilter->GetOutput());
+
+    this->BackgroundSelection.insert(this->BackgroundSelection.end(), newPoints.begin(), newPoints.end());
     }
+
+  //std::cout << this->ForegroundSelection.size() << " foreground poitns." << std::endl;
+  //std::cout << this->BackgroundSelection.size() << " background poitns." << std::endl;
 
   // "Clear" the tracer. We must rely on the foreground and background actors to maintain the appropriate colors.
   // If we did not clear the tracer, if we draw a foreground stroke (green) then switch to background mode, the last stoke would turn
@@ -180,9 +188,53 @@ void vtkGraphCutInteractorStyle::ClearSelections()
   // This seems like a silly way of emptying the polydatas...
   vtkSmartPointer<vtkPolyData> empytPolyData =
     vtkSmartPointer<vtkPolyData>::New();
-  this->ForegroundSelection->ShallowCopy(empytPolyData);
-  this->BackgroundSelection->ShallowCopy(empytPolyData);
+  this->ForegroundSelectionPolyData->ShallowCopy(empytPolyData);
+  this->BackgroundSelectionPolyData->ShallowCopy(empytPolyData);
+
+  this->ForegroundSelection.clear();
+  this->BackgroundSelection.clear();
 
   this->Refresh();
 
+}
+
+
+std::vector<itk::Index<2> > PolyDataToPixelList(vtkPolyData* polydata)
+{
+  // Convert vtkPoints to indices
+  std::vector<itk::Index<2> > linePoints;
+  for(vtkIdType i = 0; i < polydata->GetNumberOfPoints(); i++)
+    {
+    itk::Index<2> index;
+    double p[3];
+    polydata->GetPoint(i,p);
+    index[0] = round(p[0]);
+    index[1] = round(p[1]);
+    linePoints.push_back(index);
+    }
+
+  // Compute the indices between every pair of points
+  std::vector<itk::Index<2> > allIndices;
+  for(unsigned int linePointId = 1; linePointId < linePoints.size(); linePointId++)
+    {
+    itk::Index<2> index0 = linePoints[linePointId-1];
+    itk::Index<2> index1 = linePoints[linePointId];
+    // Currently need the distance between the points for Bresenham (pending patch in Gerrit)
+    itk::Point<float,2> point0;
+    itk::Point<float,2> point1;
+    for(unsigned int i = 0; i < 2; i++)
+      {
+      point0[i] = index0[i];
+      point1[i] = index1[i];
+      }
+    float distance = point0.EuclideanDistanceTo(point1);
+    itk::BresenhamLine<2> line;
+    std::vector<itk::Offset<2> > offsets = line.BuildLine(point1-point0, distance);
+    for(unsigned int i = 0; i < offsets.size(); i++)
+      {
+      allIndices.push_back(index0 + offsets[i]);
+      }
+    }
+
+  return allIndices;
 }

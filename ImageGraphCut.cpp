@@ -45,7 +45,8 @@ ImageGraphCut<TImageType>::ImageGraphCut(typename TImageType::Pointer image)
   this->Image->Graft(image);
 
   // Setup the output (mask) image
-  this->SegmentMask = GrayscaleImageType::New();
+  //this->SegmentMask = GrayscaleImageType::New();
+  this->SegmentMask = MaskImageType::New();
   this->SegmentMask->SetRegions(this->Image->GetLargestPossibleRegion());
   this->SegmentMask->Allocate();
 
@@ -74,7 +75,8 @@ template <typename TImageType>
 typename TImageType::Pointer ImageGraphCut<TImageType>::GetMaskedOutput()
 {
   // Mask the input image with the mask
-  typedef itk::MaskImageFilter< TImageType, GrayscaleImageType > MaskFilterType;
+  //typedef itk::MaskImageFilter< TImageType, GrayscaleImageType > MaskFilterType;
+  typedef itk::MaskImageFilter< TImageType, MaskImageType > MaskFilterType;
   typename MaskFilterType::Pointer maskFilter = MaskFilterType::New();
   maskFilter->SetInput1(this->Image);
   maskFilter->SetInput2(this->SegmentMask);
@@ -90,13 +92,14 @@ void ImageGraphCut<TImageType>::CutGraph()
   this->Graph->maxflow();
 
   // Setup the values of the output (mask) image
-  GrayscalePixelType sinkPixel;
-  sinkPixel[0] = 0;
-  // NumericTraits< FrequencyType >::Zero;
+  //GrayscalePixelType sinkPixel;
+  //sinkPixel[0] = 0;
+  MaskImageType::PixelType sinkPixel = 0;
 
-  GrayscalePixelType sourcePixel;
-  sourcePixel[0] = 255;
-
+  //GrayscalePixelType sourcePixel;
+  //sourcePixel[0] = 255;
+  MaskImageType::PixelType sourcePixel = 255;
+  
   // Iterate over the node image, querying the Kolmorogov graph object for the association of each pixel and storing them as the output mask
   itk::ImageRegionConstIterator<NodeImageType> nodeImageIterator(this->NodeImage, this->NodeImage->GetLargestPossibleRegion());
   nodeImageIterator.GoToBegin();
@@ -140,11 +143,12 @@ void ImageGraphCut<TImageType>::PerformSegmentation()
     }
 
   // Blank the output image
-  itk::ImageRegionIterator<GrayscaleImageType> segmentMaskImageIterator(this->SegmentMask, this->SegmentMask->GetLargestPossibleRegion());
+  //itk::ImageRegionIterator<GrayscaleImageType> segmentMaskImageIterator(this->SegmentMask, this->SegmentMask->GetLargestPossibleRegion());
+  itk::ImageRegionIterator<MaskImageType> segmentMaskImageIterator(this->SegmentMask, this->SegmentMask->GetLargestPossibleRegion());
   segmentMaskImageIterator.GoToBegin();
 
-  MaskImageType::PixelType empty;
-  empty[0] = 0;
+  MaskImageType::PixelType empty = 0;
+  //empty[0] = 0;
 
   while(!segmentMaskImageIterator.IsAtEnd())
     {
