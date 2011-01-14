@@ -98,8 +98,12 @@ void ImageGraphCutBase::SetSources(vtkPolyData* sources)
     itk::Index<2> index;
     double p[3];
     sources->GetPoint(i,p);
+    /*
     index[0] = round(p[0]);
     index[1] = round(p[1]);
+    */
+    index[0] = vtkMath::Round(p[0]);
+    index[1] = vtkMath::Round(p[1]);
 
     this->Sources.push_back(index);
     }
@@ -117,8 +121,12 @@ void ImageGraphCutBase::SetSinks(vtkPolyData* sinks)
     itk::Index<2> index;
     double p[3];
     sinks->GetPoint(i,p);
+    /*
     index[0] = round(p[0]);
     index[1] = round(p[1]);
+    */
+    index[0] = vtkMath::Round(p[0]);
+    index[1] = vtkMath::Round(p[1]);
 
     this->Sinks.push_back(index);
     }
