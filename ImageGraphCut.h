@@ -23,37 +23,98 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class vtkPolyData;
 
 // ITK
-#include <itkImage.h>
+#include "itkImage.h"
+#include "itkSampleToHistogramFilter.h"
+#include "itkHistogram.h"
+#include "itkListSample.h"
 
 // STL
 #include <vector>
 
 // Custom
-#include "ImageGraphCutBase.h"
+#include "Types.h"
 
 // Kolmogorov's code
 #include "graph.h"
 typedef Graph GraphType;
 
-template <typename TImageType>
-class ImageGraphCut : public ImageGraphCutBase
+// This is a special type to keep track of the graph node labels
+typedef itk::Image<void*, 2> NodeImageType;
+
+typedef itk::Statistics::Histogram< float,
+        itk::Statistics::DenseFrequencyContainer2 > HistogramType;
+
+
+template <typename TImage>
+class ImageGraphCut
 {
 public:
-  ImageGraphCut(typename TImageType::Pointer image);
-
   //void SetSources(vtkPolyData* sources);
   //void SetSinks(vtkPolyData* sinks);
 
-  // Create and cut the graph
+  // Several initializations are done here
+  void SetImage(typename TImage::Pointer image);
+  
+  // Create and cut the graph (The main driver function)
   void PerformSegmentation();
 
   // Get the masked output image
-  typename TImageType::Pointer GetMaskedOutput();
+  typename TImage::Pointer GetMaskedOutput();
+
+  // Return a list of the selected (via scribbling) pixels
+  std::vector<itk::Index<2> > GetSources();
+  std::vector<itk::Index<2> > GetSinks();
+
+  // Set the selected (via scribbling) pixels
+  void SetSources(vtkPolyData* sources);
+  void SetSinks(vtkPolyData* sinks);
+
+  void SetSources(std::vector<itk::Index<2> > sources);
+  void SetSinks(std::vector<itk::Index<2> > sinks);
+
+  // Get the output of the segmentation
+  MaskImageType::Pointer GetSegmentMask();
+
+  // Set the weight between the regional and boundary terms
+  void SetLambda(float);
+
+  // Set the weight of the RGB components of the pixels vs the rest of the components
+  void SetRGBWeight(float);
+
+  // Set the number of bins per dimension of the foreground and background histograms
+  void SetNumberOfHistogramBins(int);
 
 protected:
 
+
+  // A Kolmogorov graph object
+  GraphType* Graph;
+
+  // The output segmentation
+  MaskImageType::Pointer SegmentMask;
+
+  // User specified foreground points
+  std::vector<itk::Index<2> > Sources;
+
+  // User specified background points
+  std::vector<itk::Index<2> > Sinks;
+
+  // The weighting between unary and binary terms
+  float Lambda;
+
+  // The number of bins per dimension of the foreground and background histograms
+  int NumberOfHistogramBins;
+
+  // An image which keeps tracks of the mapping between pixel index and graph node id
+  NodeImageType::Pointer NodeImage;
+
+  // Determine if a number is NaN
+  bool IsNaN(const double a);
+
+  float RGBWeight;
+
   // Typedefs
-  typedef itk::Statistics::ListSample<typename TImageType::PixelType> SampleType;
+  typedef itk::Statistics::ListSample<typename TImage::PixelType> SampleType;
   typedef itk::Statistics::SampleToHistogramFilter<SampleType, HistogramType> SampleToHistogramFilterType;
 
   // Create the histograms from the users selections
@@ -68,8 +129,8 @@ protected:
   // Perform the s-t min cut
   void CutGraph();
 
-  template <typename TPixelType>
-  float PixelDifference(TPixelType, TPixelType);
+  template <typename TPixel>
+  float PixelDifference(TPixel, TPixel);
 
   // Member variables
   typename SampleType::Pointer ForegroundSample;
@@ -82,8 +143,10 @@ protected:
   typename SampleToHistogramFilterType::Pointer BackgroundHistogramFilter;
 
   // The image to be segmented
-  typename TImageType::Pointer Image;
+  typename TImage::Pointer Image;
 
 };
+
+#include "ImageGraphCut.txx"
 
 #endif

@@ -24,20 +24,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QThread>
 
-#include "ImageGraphCutBase.h"
+#include "ImageGraphCut.h"
 
-class CProgressThread : public QThread
+class ProgressThreadObject : public QThread
 {
 Q_OBJECT
 public:
-  // This function is called when the thread is started
-  void run();
-
-  // This function is called when the thread is stopped
-  void exit();
-
-  // We need a pointer to this object so we can perform the computations in this thread
-  ImageGraphCutBase* GraphCut;
 
 signals:
   // This signal is emitted to start the progress bar
@@ -46,5 +38,22 @@ signals:
   // This signal is emitted to stop the progress bar
   void StopProgressSignal();
 };
+
+template <typename TImage>
+class ProgressThread : public ProgressThreadObject
+{
+public:
+  
+  // This function is called when the thread is started
+  void run();
+
+  // This function is called when the thread is stopped
+  void exit();
+
+  // We need a pointer to this object so we can perform the computations in this thread
+  ImageGraphCut<TImage>* GraphCut;
+};
+
+#include "ProgressThread.txx"
 
 #endif
