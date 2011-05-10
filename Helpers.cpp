@@ -70,9 +70,8 @@ void MaskImage(vtkSmartPointer<vtkImageData> VTKImage, vtkSmartPointer<vtkImageD
 }
 
 
-// Specialization for image types with pixel types without [] operator
-template <>
-void ITKImagetoVTKImage<MaskImageType>(MaskImageType::Pointer image, vtkImageData* outputImage)
+// Convert single channel ITK image to VTK image
+void ITKImagetoVTKImage(MaskImageType::Pointer image, vtkImageData* outputImage)
 {
  // Setup and allocate the image data
   outputImage->SetNumberOfScalarComponents(1);
@@ -92,6 +91,36 @@ void ITKImagetoVTKImage<MaskImageType>(MaskImageType::Pointer image, vtkImageDat
     unsigned char* pixel = static_cast<unsigned char*>(outputImage->GetScalarPointer(imageIterator.GetIndex()[0],
                                                                                      imageIterator.GetIndex()[1],0));
     pixel[0] = static_cast<unsigned char>(imageIterator.Get());
+    ++imageIterator;
+    }
+}
+
+
+// Convert a vector ITK image to a VTK image for display
+void ITKImagetoVTKImage(ImageType::Pointer image, vtkImageData* outputImage)
+{
+  // Setup and allocate the image data
+  outputImage->SetNumberOfScalarComponents(image->GetNumberOfComponentsPerPixel());
+  outputImage->SetScalarTypeToUnsignedChar();
+  outputImage->SetDimensions(image->GetLargestPossibleRegion().GetSize()[0],
+                             image->GetLargestPossibleRegion().GetSize()[1],
+                             1);
+
+  outputImage->AllocateScalars();
+
+  // Copy all of the input image pixels to the output image
+  itk::ImageRegionConstIteratorWithIndex<ImageType> imageIterator(image,image->GetLargestPossibleRegion());
+  imageIterator.GoToBegin();
+
+  while(!imageIterator.IsAtEnd())
+    {
+    unsigned char* pixel = static_cast<unsigned char*>(outputImage->GetScalarPointer(imageIterator.GetIndex()[0],
+                                                                                     imageIterator.GetIndex()[1],0));
+    for(unsigned int component = 0; component < image->GetNumberOfComponentsPerPixel(); component++)
+      {
+      pixel[component] = static_cast<unsigned char>(imageIterator.Get()[component]);
+      }
+
     ++imageIterator;
     }
 }

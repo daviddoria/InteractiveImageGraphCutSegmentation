@@ -20,11 +20,8 @@ void MaskImage(vtkSmartPointer<vtkImageData> VTKImage, vtkSmartPointer<vtkImageD
 // Mark each pixel at the specified 'indices' as a non-zero pixel in 'image'
 void IndicesToBinaryImage(std::vector<itk::Index<2> > indices, UnsignedCharScalarImageType::Pointer image);
 
-template <typename TImage>
-void ITKImagetoVTKImage(typename TImage::Pointer image, vtkImageData* outputImage);
-
-template <>
-void ITKImagetoVTKImage<MaskImageType>(MaskImageType::Pointer image, vtkImageData* outputImage);
+void ITKImagetoVTKImage(ImageType::Pointer image, vtkImageData* outputImage);
+void ITKImagetoVTKImage(MaskImageType::Pointer image, vtkImageData* outputImage);
 
 }
 

@@ -45,7 +45,6 @@ typedef itk::Statistics::Histogram< float,
         itk::Statistics::DenseFrequencyContainer2 > HistogramType;
 
 
-template <typename TImage>
 class ImageGraphCut
 {
 public:
@@ -53,13 +52,13 @@ public:
   //void SetSinks(vtkPolyData* sinks);
 
   // Several initializations are done here
-  void SetImage(typename TImage::Pointer image);
-  
+  void SetImage(ImageType::Pointer image);
+
   // Create and cut the graph (The main driver function)
   void PerformSegmentation();
 
   // Get the masked output image
-  typename TImage::Pointer GetMaskedOutput();
+  ImageType::Pointer GetMaskedOutput();
 
   // Return a list of the selected (via scribbling) pixels
   std::vector<itk::Index<2> > GetSources();
@@ -114,7 +113,7 @@ protected:
   float RGBWeight;
 
   // Typedefs
-  typedef itk::Statistics::ListSample<typename TImage::PixelType> SampleType;
+  typedef itk::Statistics::ListSample<PixelType> SampleType;
   typedef itk::Statistics::SampleToHistogramFilter<SampleType, HistogramType> SampleToHistogramFilterType;
 
   // Create the histograms from the users selections
@@ -129,24 +128,21 @@ protected:
   // Perform the s-t min cut
   void CutGraph();
 
-  template <typename TPixel>
-  float PixelDifference(TPixel, TPixel);
+  float PixelDifference(PixelType, PixelType);
 
   // Member variables
-  typename SampleType::Pointer ForegroundSample;
-  typename SampleType::Pointer BackgroundSample;
+  SampleType::Pointer ForegroundSample;
+  SampleType::Pointer BackgroundSample;
 
   const HistogramType* ForegroundHistogram;
   const HistogramType* BackgroundHistogram;
 
-  typename SampleToHistogramFilterType::Pointer ForegroundHistogramFilter;
-  typename SampleToHistogramFilterType::Pointer BackgroundHistogramFilter;
+  SampleToHistogramFilterType::Pointer ForegroundHistogramFilter;
+  SampleToHistogramFilterType::Pointer BackgroundHistogramFilter;
 
   // The image to be segmented
-  typename TImage::Pointer Image;
+  ImageType::Pointer Image;
 
 };
-
-#include "ImageGraphCut.txx"
 
 #endif

@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "vtkGraphCutInteractorStyle.h"
+#include "vtkScribbleInteractorStyle.h"
 
 #include <vtkActor.h>
 #include <vtkAppendPolyData.h>
@@ -35,9 +35,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <itkImageRegionIterator.h>
 #include <itkBresenhamLine.h>
 
-vtkStandardNewMacro(vtkGraphCutInteractorStyle);
+vtkStandardNewMacro(vtkScribbleInteractorStyle);
 
-vtkGraphCutInteractorStyle::vtkGraphCutInteractorStyle()
+vtkScribbleInteractorStyle::vtkScribbleInteractorStyle()
 {
   // Initializations
   this->Tracer = vtkSmartPointer<vtkImageTracerWidget>::New();
@@ -63,28 +63,28 @@ vtkGraphCutInteractorStyle::vtkGraphCutInteractorStyle()
   this->BackgroundSelectionMapper->SetInputConnection(this->BackgroundSelectionPolyData->GetProducerPort());
 
   // Update the selection when the EndInteraction event is fired.
-  this->Tracer->AddObserver(vtkCommand::EndInteractionEvent, this, &vtkGraphCutInteractorStyle::CatchWidgetEvent);
+  this->Tracer->AddObserver(vtkCommand::EndInteractionEvent, this, &vtkScribbleInteractorStyle::CatchWidgetEvent);
 
   // Defaults
   this->SelectionType = FOREGROUND;
 }
 
-std::vector<itk::Index<2> > vtkGraphCutInteractorStyle::GetForegroundSelection()
+std::vector<itk::Index<2> > vtkScribbleInteractorStyle::GetForegroundSelection()
 {
   return this->ForegroundSelection;
 }
 
-std::vector<itk::Index<2> > vtkGraphCutInteractorStyle::GetBackgroundSelection()
+std::vector<itk::Index<2> > vtkScribbleInteractorStyle::GetBackgroundSelection()
 {
   return this->BackgroundSelection;
 }
 
-int vtkGraphCutInteractorStyle::GetSelectionType()
+int vtkScribbleInteractorStyle::GetSelectionType()
 {
   return this->SelectionType;
 }
 
-void vtkGraphCutInteractorStyle::InitializeTracer(vtkImageActor* imageActor)
+void vtkScribbleInteractorStyle::InitializeTracer(vtkImageActor* imageActor)
 {
   this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(imageActor);
   this->Tracer->SetInteractor(this->Interactor);
@@ -94,19 +94,19 @@ void vtkGraphCutInteractorStyle::InitializeTracer(vtkImageActor* imageActor)
   this->Tracer->On();
 }
 
-void vtkGraphCutInteractorStyle::SetInteractionModeToForeground()
+void vtkScribbleInteractorStyle::SetInteractionModeToForeground()
 {
   this->Tracer->GetLineProperty()->SetColor(0,1,0);
   this->SelectionType = FOREGROUND;
 }
 
-void vtkGraphCutInteractorStyle::SetInteractionModeToBackground()
+void vtkScribbleInteractorStyle::SetInteractionModeToBackground()
 {
   this->Tracer->GetLineProperty()->SetColor(1,0,0);
   this->SelectionType = BACKGROUND;
 }
 
-void vtkGraphCutInteractorStyle::CatchWidgetEvent(vtkObject* caller, long unsigned int eventId, void* callData)
+void vtkScribbleInteractorStyle::CatchWidgetEvent(vtkObject* caller, long unsigned int eventId, void* callData)
 {
   // Get the path from the tracer and append it to the appropriate selection
 
@@ -129,9 +129,9 @@ void vtkGraphCutInteractorStyle::CatchWidgetEvent(vtkObject* caller, long unsign
 
   std::vector<itk::Index<2> > newPoints = PolyDataToPixelList(path);
   //std::cout << newPoints.size() << " new points." << std::endl;
-  
+
   // If we are in foreground mode, add the current selection to the foreground. Else, add it to the background.
-  if(this->SelectionType == vtkGraphCutInteractorStyle::FOREGROUND)
+  if(this->SelectionType == vtkScribbleInteractorStyle::FOREGROUND)
     {
     appendFilter->AddInputConnection(this->ForegroundSelectionPolyData->GetProducerPort());
     appendFilter->Update();
@@ -139,7 +139,7 @@ void vtkGraphCutInteractorStyle::CatchWidgetEvent(vtkObject* caller, long unsign
 
     this->ForegroundSelection.insert(this->ForegroundSelection.end(), newPoints.begin(), newPoints.end());
     }
-  else if(this->SelectionType == vtkGraphCutInteractorStyle::BACKGROUND)
+  else if(this->SelectionType == vtkScribbleInteractorStyle::BACKGROUND)
     {
     appendFilter->AddInputConnection(this->BackgroundSelectionPolyData->GetProducerPort());
     appendFilter->Update();
@@ -166,13 +166,13 @@ void vtkGraphCutInteractorStyle::CatchWidgetEvent(vtkObject* caller, long unsign
 
 };
 
-void vtkGraphCutInteractorStyle::Refresh()
+void vtkScribbleInteractorStyle::Refresh()
 {
   this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->Render();
   this->Interactor->GetRenderWindow()->Render();
 }
 
-void vtkGraphCutInteractorStyle::ClearSelections()
+void vtkScribbleInteractorStyle::ClearSelections()
 {
   /*
    // I thought this would work...

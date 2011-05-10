@@ -21,8 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * the selections.
 */
 
-#ifndef vtkGraphCutInteractorStyle_H
-#define vtkGraphCutInteractorStyle_H
+#ifndef vtkScribbleInteractorStyle_H
+#define vtkScribbleInteractorStyle_H
 
 #include <vtkImageTracerWidget.h>
 #include <vtkInteractorStyleImage.h> // superclass
@@ -34,13 +34,13 @@ class vtkImageActor;
 class vtkImageData;
 class vtkPolyData;
 
-class vtkGraphCutInteractorStyle : public vtkInteractorStyleImage
+class vtkScribbleInteractorStyle : public vtkInteractorStyleImage
 {
 public:
-  static vtkGraphCutInteractorStyle* New();
-  vtkTypeMacro(vtkGraphCutInteractorStyle, vtkInteractorStyleImage);
+  static vtkScribbleInteractorStyle* New();
+  vtkTypeMacro(vtkScribbleInteractorStyle, vtkInteractorStyleImage);
 
-  vtkGraphCutInteractorStyle();
+  vtkScribbleInteractorStyle();
 
   int GetSelectionType();
   enum SELECTION {FOREGROUND, BACKGROUND};
@@ -72,7 +72,7 @@ private:
   // Keep track of the pixels the user selected.
   std::vector<itk::Index<2> > ForegroundSelection;
   std::vector<itk::Index<2> > BackgroundSelection;
-  
+
   // Data, mapper, and actor for the selections
   vtkSmartPointer<vtkPolyData> ForegroundSelectionPolyData;
   vtkSmartPointer<vtkPolyData> BackgroundSelectionPolyData;

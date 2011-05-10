@@ -28,6 +28,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // Qt
 #include "ui_MainWindow.h"
 
+// Custom
+#include "ProgressThread.h"
+#include "vtkScribbleInteractorStyle.h"
+
 class MainWindow : public QMainWindow, private Ui::MainWindow
 {
 Q_OBJECT
@@ -36,12 +40,62 @@ public:
 
 public slots:
   // Menu items
-  void actionOpen_Color_Image_triggered();
-  void actionOpen_Grayscale_Image_triggered();
-//  void actionFlip_Image_triggered();
-//  void actionSave_Segmentation_triggered();
+  void actionOpenImage_triggered();
+  void actionSaveSegmentation_triggered();
+  void actionFlipImage_triggered();
 
+  // Buttons, radio buttons, and sliders
+  void btnClearSelections_clicked();
+  void btnSaveSelections_clicked();
+  void btnCut_clicked();
+  void radForeground_clicked();
+  void radBackground_clicked();
+  void sldHistogramBins_valueChanged();
 
+  // Setting lambda must be handled specially because we need to multiply the percentage set by the slider by the MaxLambda set in the text box
+  void UpdateLambda();
+
+  // These slots handle running the progress bar while the computations are done in a separate thread.
+  void StartProgressSlot();
+  void StopProgressSlot();
+
+  // Use a QFileDialog to get a filename, then open the specified file as a greyscale or color image, depending on which type the user has specified through the file menu.
+  void OpenFile();
+  
+  
+protected:
+
+  // A class to do the main computations in a separate thread so we can display a marquee progress bar.
+  ProgressThread<ImageType> SegmentationThread;
+
+  // Compute lambda by multiplying the percentage set by the slider by the MaxLambda set in the text box.
+  float ComputeLambda();
+
+  // Our scribble interactor style
+  vtkSmartPointer<vtkScribbleInteractorStyle> GraphCutStyle;
+
+  // The input and output image actors
+  vtkSmartPointer<vtkImageActor> OriginalImageActor;
+  vtkSmartPointer<vtkImageActor> ResultActor;
+
+  // The renderers
+  vtkSmartPointer<vtkRenderer> LeftRenderer;
+  vtkSmartPointer<vtkRenderer> RightRenderer;
+
+  // Refresh both renderers and render windows
+  void Refresh();
+
+  // The main segmentation class. This will be instantiated as a ImageGraphCut after the user selects whether to open a color or grayscale image.
+  ImageGraphCut GraphCut;
+
+  // Allows the background color to be changed
+  double BackgroundColor[3];
+
+  // Allows the image to be flipped so that it is "right side up"
+  double CameraUp[3];
+
+  // We set this when the image is opeend. We sometimes need to know how big the image is.
+  itk::ImageRegion<2> ImageRegion;
 };
 
 #endif

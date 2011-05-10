@@ -43,7 +43,7 @@ template <typename TImage>
 class ProgressThread : public ProgressThreadObject
 {
 public:
-  
+
   // This function is called when the thread is started
   void run();
 
@@ -51,7 +51,7 @@ public:
   void exit();
 
   // We need a pointer to this object so we can perform the computations in this thread
-  ImageGraphCut<TImage>* GraphCut;
+  ImageGraphCut* GraphCut;
 };
 
 #include "ProgressThread.txx"
