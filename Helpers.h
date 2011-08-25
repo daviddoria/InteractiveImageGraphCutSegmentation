@@ -20,8 +20,14 @@ void MaskImage(vtkSmartPointer<vtkImageData> VTKImage, vtkSmartPointer<vtkImageD
 // Mark each pixel at the specified 'indices' as a non-zero pixel in 'image'
 void IndicesToBinaryImage(std::vector<itk::Index<2> > indices, UnsignedCharScalarImageType::Pointer image);
 
-void ITKImagetoVTKImage(ImageType::Pointer image, vtkImageData* outputImage);
-void ITKImagetoVTKImage(MaskImageType::Pointer image, vtkImageData* outputImage);
+// Invert binary image
+void InvertBinaryImage(UnsignedCharScalarImageType::Pointer image, UnsignedCharScalarImageType::Pointer inverted);
+
+void ITKImagetoVTKImage(ImageType::Pointer image, vtkImageData* outputImage); // This function simply drives ITKImagetoVTKRGBImage or ITKImagetoVTKMagnitudeImage
+void ITKImagetoVTKRGBImage(ImageType::Pointer image, vtkImageData* outputImage);
+void ITKImagetoVTKMagnitudeImage(ImageType::Pointer image, vtkImageData* outputImage);
+
+void ITKScalarImagetoVTKImage(MaskImageType::Pointer image, vtkImageData* outputImage);
 
 }
 

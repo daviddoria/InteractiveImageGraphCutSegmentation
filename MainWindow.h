@@ -40,17 +40,19 @@ public:
 
 public slots:
   // Menu items
-  void actionOpenImage_triggered();
-  void actionSaveSegmentation_triggered();
-  void actionFlipImage_triggered();
+  void on_actionOpenImage_triggered();
+  void on_actionSaveSegmentation_triggered();
+  void on_actionFlipImage_triggered();
+  void on_actionExit_triggered();
 
   // Buttons, radio buttons, and sliders
-  void btnClearSelections_clicked();
-  void btnSaveSelections_clicked();
-  void btnCut_clicked();
-  void radForeground_clicked();
-  void radBackground_clicked();
+  void on_btnClearSelections_clicked();
+  void on_btnSaveSelections_clicked();
+  void on_btnCut_clicked();
+  void on_radForeground_clicked();
+  void on_radBackground_clicked();
   void sldHistogramBins_valueChanged();
+  void on_sldRGBWeight_valueChanged();
 
   // Setting lambda must be handled specially because we need to multiply the percentage set by the slider by the MaxLambda set in the text box
   void UpdateLambda();

@@ -66,7 +66,7 @@ void ImageGraphCut::SetImage(ImageType::Pointer image)
   this->ForegroundHistogramFilter = SampleToHistogramFilterType::New();
   this->BackgroundHistogramFilter = SampleToHistogramFilterType::New();
 
-  this->RGBWeight = 0.5;
+  this->RGBWeight = 0.5; // This value is never used - it is set from the slider
 
 }
 
@@ -95,6 +95,8 @@ ImageType::Pointer ImageGraphCut::GetMaskedOutput()
 
 void ImageGraphCut::CutGraph()
 {
+  std::cout << "RGBWeight: " << RGBWeight << std::endl;
+  
   // Compute max-flow
   this->Graph->maxflow();
 
@@ -315,7 +317,7 @@ void ImageGraphCut::CreateGraph()
   while(!imageIterator.IsAtEnd())
     {
     PixelType pixel = imageIterator.Get();
-    std::cout << "Pixels have size: " << pixel.Size() << std::endl;
+    //std::cout << "Pixels have size: " << pixel.Size() << std::endl;
 
     HistogramType::MeasurementVectorType measurementVector(pixel.Size());
     for(unsigned int i = 0; i < pixel.Size(); i++)

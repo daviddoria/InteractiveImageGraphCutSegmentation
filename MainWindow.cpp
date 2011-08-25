@@ -49,20 +49,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
   // Setup the GUI and connect all of the signals and slots
   setupUi(this);
-  
-  // Menu items
-  // File menu
-  connect( this->actionOpenImage, SIGNAL( triggered() ), this, SLOT(actionOpenImage_triggered()) );
-  connect( this->actionSaveSegmentation, SIGNAL( triggered() ), this, SLOT(actionSaveSegmentation_triggered()));
 
-  // Edit menu
-  connect( this->actionFlipImage, SIGNAL( triggered() ), this, SLOT(actionFlipImage_triggered()));
-  
-  connect( this->radForeground, SIGNAL( clicked() ), this, SLOT(radForeground_clicked()) );
-  connect( this->radBackground, SIGNAL( clicked() ), this, SLOT(radBackground_clicked()) );
-  connect( this->btnCut, SIGNAL( clicked() ), this, SLOT(btnCut_clicked()));
-  connect( this->btnClearSelections, SIGNAL( clicked() ), this, SLOT(btnClearSelections_clicked()));
-  connect( this->btnSaveSelections, SIGNAL( clicked() ), this, SLOT(btnSaveSelections_clicked()));
   connect( this->sldHistogramBins, SIGNAL( valueChanged(int) ), this, SLOT(sldHistogramBins_valueChanged()));
   connect( this->sldLambda, SIGNAL( valueChanged(int) ), this, SLOT(UpdateLambda()));
   connect( this->txtLambdaMax, SIGNAL( textEdited(QString) ), this, SLOT(UpdateLambda()));
@@ -112,9 +99,25 @@ MainWindow::MainWindow(QWidget *parent)
 
   // Default GUI settings
   this->radForeground->setChecked(true);
+
+  // Setup toolbar
+  // Open file buttons
+  QIcon openIcon = QIcon::fromTheme("document-open");
+  actionOpenImage->setIcon(openIcon);
+  this->toolBar->addAction(actionOpenImage);
+
+  // Save buttons
+  QIcon saveIcon = QIcon::fromTheme("document-save");
+  actionSaveSegmentation->setIcon(saveIcon);
+  this->toolBar->addAction(actionSaveSegmentation);
 }
 
-void MainWindow::actionFlipImage_triggered()
+void MainWindow::on_actionExit_triggered()
+{
+  exit(0);
+}
+
+void MainWindow::on_actionFlipImage_triggered()
 {
   this->CameraUp[1] *= -1;
   this->LeftRenderer->GetActiveCamera()->SetViewUp(this->CameraUp);
@@ -122,12 +125,12 @@ void MainWindow::actionFlipImage_triggered()
   this->Refresh();
 }
 
-void MainWindow::actionSaveSegmentation_triggered()
+void MainWindow::on_actionSaveSegmentation_triggered()
 {
   // Ask the user for a filename to save the segment mask image to
 
   QString fileName = QFileDialog::getSaveFileName(this,
-    tr("Save Segment Mask Image"), "/home/doriad", tr("Image Files (*.png *.bmp)"));
+    "Save Segment Mask Image", ".", "Image Files (*.png *.mha)");
 /*
   // Convert the image from a 1D vector image to an unsigned char image
   typedef itk::CastImageFilter< GrayscaleImageType, itk::Image<itk::CovariantVector<unsigned char, 1>, 2 > > CastFilterType;
@@ -141,7 +144,8 @@ void MainWindow::actionSaveSegmentation_triggered()
   adaptor->SelectNthElement(0);
   adaptor->SetImage(castFilter->GetOutput());
 */
-  // Write the file
+/*
+  // Write the file (object is white)
   //typedef  itk::ImageFileWriter< ImageAdaptorType > WriterType;
   typedef  itk::ImageFileWriter< MaskImageType > WriterType;
   WriterType::Pointer writer = WriterType::New();
@@ -149,12 +153,24 @@ void MainWindow::actionSaveSegmentation_triggered()
   //writer->SetInput(adaptor);
   writer->SetInput(this->GraphCut.GetSegmentMask());
   writer->Update();
+  */
+
+  // Write the inverted file (object is black)
+  MaskImageType::Pointer inverted = MaskImageType::New();
+  Helpers::InvertBinaryImage(this->GraphCut.GetSegmentMask(), inverted);
+  
+  //typedef  itk::ImageFileWriter< ImageAdaptorType > WriterType;
+  typedef  itk::ImageFileWriter< MaskImageType > WriterType;
+  WriterType::Pointer writer = WriterType::New();
+  writer->SetFileName(fileName.toStdString());
+  writer->SetInput(inverted);
+  writer->Update();
 
 }
 
-void MainWindow::actionOpenImage_triggered()
+void MainWindow::on_actionOpenImage_triggered()
 {
-  std::cout << "actionOpenImage_triggered()" << std::endl;
+  //std::cout << "actionOpenImage_triggered()" << std::endl;
   OpenFile();
 }
 
@@ -212,7 +228,7 @@ void MainWindow::StopProgressSlot()
   // Convert the segmentation mask to a binary VTK image
   vtkSmartPointer<vtkImageData> VTKSegmentMask =
     vtkSmartPointer<vtkImageData>::New();
-  Helpers::ITKImagetoVTKImage(this->GraphCut.GetSegmentMask(), VTKSegmentMask);
+  Helpers::ITKScalarImagetoVTKImage(this->GraphCut.GetSegmentMask(), VTKSegmentMask);
 
   // Convert the image into a VTK image for display
   vtkSmartPointer<vtkImageData> VTKImage =
@@ -255,24 +271,30 @@ void MainWindow::UpdateLambda()
 void MainWindow::sldHistogramBins_valueChanged()
 {
   this->GraphCut.SetNumberOfHistogramBins(sldHistogramBins->value());
+  //this->lblHistogramBins->setText(QString::number(sldHistogramBins->value())); // This is taken care of by a signal/slot pair setup in QtDesigner
 }
 
-void MainWindow::radForeground_clicked()
+void MainWindow::on_sldRGBWeight_valueChanged()
+{
+  this->lblRGBWeight->setText(QString::number(sldRGBWeight->value() / 100.));
+}
+
+void MainWindow::on_radForeground_clicked()
 {
   this->GraphCutStyle->SetInteractionModeToForeground();
 }
 
-void MainWindow::radBackground_clicked()
+void MainWindow::on_radBackground_clicked()
 {
   this->GraphCutStyle->SetInteractionModeToBackground();
 }
 
-void MainWindow::btnClearSelections_clicked()
+void MainWindow::on_btnClearSelections_clicked()
 {
   this->GraphCutStyle->ClearSelections();
 }
 
-void MainWindow::btnSaveSelections_clicked()
+void MainWindow::on_btnSaveSelections_clicked()
 {
   QString directoryName = QFileDialog::getExistingDirectory(this,
      "Open Directory", QDir::homePath(), QFileDialog::ShowDirsOnly);
@@ -303,7 +325,7 @@ void MainWindow::btnSaveSelections_clicked()
   writer->Update();
 }
 
-void MainWindow::btnCut_clicked()
+void MainWindow::on_btnCut_clicked()
 {
   // Get the number of bins from the slider
   this->GraphCut.SetNumberOfHistogramBins(this->sldHistogramBins->value());
@@ -317,6 +339,7 @@ void MainWindow::btnCut_clicked()
     }
 
   // Setup the graph cut from the GUI and the scribble selection
+  this->GraphCut.SetRGBWeight(sldRGBWeight->value() / 100.);
   this->GraphCut.SetLambda(ComputeLambda());
   this->GraphCut.SetSources(this->GraphCutStyle->GetForegroundSelection());
   this->GraphCut.SetSinks(this->GraphCutStyle->GetBackgroundSelection());
@@ -371,11 +394,11 @@ void InnerWidget::actionSave_Segmentation_triggered()
 
 void MainWindow::OpenFile()
 {
-  std::cout << "OpenFile()" << std::endl;
+  //std::cout << "Enter OpenFile()" << std::endl;
   
   // Get a filename to open
   QString filename = QFileDialog::getOpenFileName(this,
-     tr("Open Image"), "/media/portable/Projects/src/InteractiveImageGraphCutSegmentation/data", tr("Image Files (*.png *.mhd)"));
+     "Open Image", ".", "Image Files (*.png *.mha)");
 
   if(filename.isEmpty())
     {
@@ -386,7 +409,7 @@ void MainWindow::OpenFile()
   this->GraphCutStyle->ClearSelections();
 
   // Read file
-  typename itk::ImageFileReader<ImageType>::Pointer reader = itk::ImageFileReader<ImageType>::New();
+  itk::ImageFileReader<ImageType>::Pointer reader = itk::ImageFileReader<ImageType>::New();
 
   reader->SetFileName(filename.toStdString());
   reader->Update();
@@ -396,8 +419,7 @@ void MainWindow::OpenFile()
   this->GraphCut.SetImage(reader->GetOutput());
 
   // Convert the ITK image to a VTK image and display it
-  vtkSmartPointer<vtkImageData> VTKImage =
-    vtkSmartPointer<vtkImageData>::New();
+  vtkSmartPointer<vtkImageData> VTKImage = vtkSmartPointer<vtkImageData>::New();
   Helpers::ITKImagetoVTKImage(reader->GetOutput(), VTKImage);
 
   this->LeftRenderer->RemoveAllViewProps();
@@ -417,12 +439,14 @@ void MainWindow::OpenFile()
     {
     this->GraphCutStyle->SetInteractionModeToForeground();
     }
+    
+  //std::cout << "Exit OpenFile()" << std::endl;
 }
 
 void MainWindow::Refresh()
 {
-  this->LeftRenderer->Render();
-  this->RightRenderer->Render();
+  //this->LeftRenderer->Render();
+  //this->RightRenderer->Render();
   this->qvtkWidgetRight->GetRenderWindow()->Render();
   this->qvtkWidgetLeft->GetRenderWindow()->Render();
   this->qvtkWidgetRight->GetInteractor()->Render();
