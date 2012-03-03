@@ -22,21 +22,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * mode during long computations.
 */
 
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#ifndef GraphCutSegmentationWidget_H
+#define GraphCutSegmentationWidget_H
 
-// Qt
-#include "ui_MainWindow.h"
+#include "ui_GraphCutSegmentationWidget.h"
 
 // Custom
 #include "ProgressThread.h"
 #include "vtkScribbleInteractorStyle.h"
 
-class MainWindow : public QMainWindow, private Ui::MainWindow
+class GraphCutSegmentationWidget : public QMainWindow, private Ui::GraphCutSegmentationWidget
 {
 Q_OBJECT
 public:
-  MainWindow(QWidget *parent = 0);
+  GraphCutSegmentationWidget(QWidget *parent = 0);
 
 public slots:
   // Menu items

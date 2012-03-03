@@ -5,8 +5,8 @@ Project(InteractiveImageGraphCutSegmentation)
 FIND_PACKAGE(Qt4 REQUIRED)
 INCLUDE(${QT_USE_FILE})
 
-QT4_WRAP_UI(UISrcs MainWindow.ui)
-QT4_WRAP_CPP(MOCSrcs MainWindow.h ProgressThread.h)
+QT4_WRAP_UI(UISrcs GraphCutSegmentationWidget.ui)
+QT4_WRAP_CPP(MOCSrcs GraphCutSegmentationWidget.h ProgressThread.h)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
@@ -18,7 +18,7 @@ INCLUDE( ${USE_ITK_FILE} )
 
 add_library(MaxFlow graph.cpp maxflow.cpp)
 
-ADD_EXECUTABLE(InteractiveImageGraphCutSegmentation main.cpp MainWindow.cpp
+ADD_EXECUTABLE(InteractiveImageGraphCutSegmentation main.cpp GraphCutSegmentationWidget.cpp
 Helpers.cpp
 vtkScribbleInteractorStyle.cxx
 ImageGraphCut.cxx

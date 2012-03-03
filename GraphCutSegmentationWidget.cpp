@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "MainWindow.h"
+#include "GraphCutSegmentationWidget.h"
 
 #include "Helpers.h"
 
@@ -45,7 +45,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <iostream>
 
-MainWindow::MainWindow(QWidget *parent)
+GraphCutSegmentationWidget::GraphCutSegmentationWidget(QWidget *parent)
 {
   // Setup the GUI and connect all of the signals and slots
   setupUi(this);
@@ -112,12 +112,12 @@ MainWindow::MainWindow(QWidget *parent)
   this->toolBar->addAction(actionSaveSegmentation);
 }
 
-void MainWindow::on_actionExit_triggered()
+void GraphCutSegmentationWidget::on_actionExit_triggered()
 {
   exit(0);
 }
 
-void MainWindow::on_actionFlipImage_triggered()
+void GraphCutSegmentationWidget::on_actionFlipImage_triggered()
 {
   this->CameraUp[1] *= -1;
   this->LeftRenderer->GetActiveCamera()->SetViewUp(this->CameraUp);
@@ -125,7 +125,7 @@ void MainWindow::on_actionFlipImage_triggered()
   this->Refresh();
 }
 
-void MainWindow::on_actionSaveSegmentation_triggered()
+void GraphCutSegmentationWidget::on_actionSaveSegmentation_triggered()
 {
   // Ask the user for a filename to save the segment mask image to
 
@@ -168,14 +168,14 @@ void MainWindow::on_actionSaveSegmentation_triggered()
 
 }
 
-void MainWindow::on_actionOpenImage_triggered()
+void GraphCutSegmentationWidget::on_actionOpenImage_triggered()
 {
   //std::cout << "actionOpenImage_triggered()" << std::endl;
   OpenFile();
 }
 
 
-void MainWindow::StartProgressSlot()
+void GraphCutSegmentationWidget::StartProgressSlot()
 {
   // Connected to the StartProgressSignal of the ProgressThread member
   this->progressBar->show();
@@ -221,7 +221,7 @@ void Form::StopProgressSlot()
 */
 
 // Display segmented image with transparent background pixels
-void MainWindow::StopProgressSlot()
+void GraphCutSegmentationWidget::StopProgressSlot()
 {
   // When the ProgressThread emits the StopProgressSignal, we need to display the result of the segmentation
 
@@ -250,7 +250,7 @@ void MainWindow::StopProgressSlot()
   this->progressBar->hide();
 }
 
-float MainWindow::ComputeLambda()
+float GraphCutSegmentationWidget::ComputeLambda()
 {
   // Compute lambda by multiplying the percentage set by the slider by the MaxLambda set in the text box
 
@@ -261,40 +261,40 @@ float MainWindow::ComputeLambda()
   return lambda;
 }
 
-void MainWindow::UpdateLambda()
+void GraphCutSegmentationWidget::UpdateLambda()
 {
   // Compute lambda and then set the label to this value so the user can see the current setting
   double lambda = ComputeLambda();
   this->lblLambda->setText(QString::number(lambda));
 }
 
-void MainWindow::sldHistogramBins_valueChanged()
+void GraphCutSegmentationWidget::sldHistogramBins_valueChanged()
 {
   this->GraphCut.SetNumberOfHistogramBins(sldHistogramBins->value());
   //this->lblHistogramBins->setText(QString::number(sldHistogramBins->value())); // This is taken care of by a signal/slot pair setup in QtDesigner
 }
 
-void MainWindow::on_sldRGBWeight_valueChanged()
+void GraphCutSegmentationWidget::on_sldRGBWeight_valueChanged()
 {
   this->lblRGBWeight->setText(QString::number(sldRGBWeight->value() / 100.));
 }
 
-void MainWindow::on_radForeground_clicked()
+void GraphCutSegmentationWidget::on_radForeground_clicked()
 {
   this->GraphCutStyle->SetInteractionModeToForeground();
 }
 
-void MainWindow::on_radBackground_clicked()
+void GraphCutSegmentationWidget::on_radBackground_clicked()
 {
   this->GraphCutStyle->SetInteractionModeToBackground();
 }
 
-void MainWindow::on_btnClearSelections_clicked()
+void GraphCutSegmentationWidget::on_btnClearSelections_clicked()
 {
   this->GraphCutStyle->ClearSelections();
 }
 
-void MainWindow::on_btnSaveSelections_clicked()
+void GraphCutSegmentationWidget::on_btnSaveSelections_clicked()
 {
   QString directoryName = QFileDialog::getExistingDirectory(this,
      "Open Directory", QDir::homePath(), QFileDialog::ShowDirsOnly);
@@ -325,7 +325,7 @@ void MainWindow::on_btnSaveSelections_clicked()
   writer->Update();
 }
 
-void MainWindow::on_btnCut_clicked()
+void GraphCutSegmentationWidget::on_btnCut_clicked()
 {
   // Get the number of bins from the slider
   this->GraphCut.SetNumberOfHistogramBins(this->sldHistogramBins->value());
@@ -392,7 +392,7 @@ void InnerWidget::actionSave_Segmentation_triggered()
 }
 #endif
 
-void MainWindow::OpenFile()
+void GraphCutSegmentationWidget::OpenFile()
 {
   //std::cout << "Enter OpenFile()" << std::endl;
   
@@ -443,7 +443,7 @@ void MainWindow::OpenFile()
   //std::cout << "Exit OpenFile()" << std::endl;
 }
 
-void MainWindow::Refresh()
+void GraphCutSegmentationWidget::Refresh()
 {
   //this->LeftRenderer->Render();
   //this->RightRenderer->Render();
