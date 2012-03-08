@@ -19,14 +19,26 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QApplication>
 
+#include <iostream>
+
 #include "GraphCutSegmentationWidget.h"
 
 int main(int argc, char** argv)
 {
   QApplication app(argc, argv);
 
-  GraphCutSegmentationWidget graphCutSegmentationWidget;
-  graphCutSegmentationWidget.show();
-
+  GraphCutSegmentationWidget* graphCutSegmentationWidget = NULL;
+  if(argc == 1)
+  {
+    graphCutSegmentationWidget = new GraphCutSegmentationWidget;
+  }
+  else if(argc == 2)
+  {
+    std::string fileName = argv[1];
+    std::cout << "filename: " << fileName << std::endl;
+    graphCutSegmentationWidget = new GraphCutSegmentationWidget(fileName);
+  }
+  
+  graphCutSegmentationWidget->show();
   return app.exec();
 }

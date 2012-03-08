@@ -36,15 +36,16 @@ class GraphCutSegmentationWidget : public QMainWindow, private Ui::GraphCutSegme
 Q_OBJECT
 public:
   GraphCutSegmentationWidget(QWidget *parent = 0);
+  GraphCutSegmentationWidget(const std::string& fileName);
 
 public slots:
-  // Menu items
+  /** Menu items*/
   void on_actionOpenImage_triggered();
   void on_actionSaveSegmentation_triggered();
   void on_actionFlipImage_triggered();
   void on_actionExit_triggered();
 
-  // Buttons, radio buttons, and sliders
+  /** Buttons, radio buttons, and sliders*/
   void on_btnClearSelections_clicked();
   void on_btnSaveSelections_clicked();
   void on_btnCut_clicked();
@@ -53,49 +54,58 @@ public slots:
   void sldHistogramBins_valueChanged();
   void on_sldRGBWeight_valueChanged();
 
-  // Setting lambda must be handled specially because we need to multiply the percentage set by the slider by the MaxLambda set in the text box
+  /** Setting lambda must be handled specially because we need to multiply the
+   *  percentage set by the slider by the MaxLambda set in the text box
+   */
   void UpdateLambda();
 
-  // These slots handle running the progress bar while the computations are done in a separate thread.
+  /** These slots handle running the progress bar while the computations are done in a separate thread. */
   void StartProgressSlot();
   void StopProgressSlot();
 
-  // Use a QFileDialog to get a filename, then open the specified file as a greyscale or color image, depending on which type the user has specified through the file menu.
-  void OpenFile();
+  /** Open the specified file as a greyscale or color image,
+   *  depending on which type the user has specified through the file menu.
+   */
+  void OpenFile(const std::string& fileName);
   
   
 protected:
 
-  // A class to do the main computations in a separate thread so we can display a marquee progress bar.
+  /** A constructor that can be used by all other constructors. */
+  void SharedConstructor();
+  
+  /** A class to do the main computations in a separate thread so we can display a marquee progress bar. */
   ProgressThread<ImageType> SegmentationThread;
 
-  // Compute lambda by multiplying the percentage set by the slider by the MaxLambda set in the text box.
+  /** Compute lambda by multiplying the percentage set by the slider by the MaxLambda set in the text box. */
   float ComputeLambda();
 
-  // Our scribble interactor style
+  /** Our scribble interactor style */
   vtkSmartPointer<vtkScribbleInteractorStyle> GraphCutStyle;
 
-  // The input and output image actors
+  /** The input and output image actors */
   vtkSmartPointer<vtkImageActor> OriginalImageActor;
   vtkSmartPointer<vtkImageActor> ResultActor;
 
-  // The renderers
+  /** The renderers */
   vtkSmartPointer<vtkRenderer> LeftRenderer;
   vtkSmartPointer<vtkRenderer> RightRenderer;
 
-  // Refresh both renderers and render windows
+  /** Refresh both renderers and render windows */
   void Refresh();
 
-  // The main segmentation class. This will be instantiated as a ImageGraphCut after the user selects whether to open a color or grayscale image.
+  /** The main segmentation class. This will be instantiated as a ImageGraphCut
+   *  after the user selects whether to open a color or grayscale image.
+   */
   ImageGraphCut GraphCut;
 
-  // Allows the background color to be changed
+  /** Allows the background color to be changed*/
   double BackgroundColor[3];
 
-  // Allows the image to be flipped so that it is "right side up"
+  /** Allows the image to be flipped so that it is "right side up"*/
   double CameraUp[3];
 
-  // We set this when the image is opeend. We sometimes need to know how big the image is.
+  /** We set this when the image is opeend. We sometimes need to know how big the image is.*/
   itk::ImageRegion<2> ImageRegion;
 };
 

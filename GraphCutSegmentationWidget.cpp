@@ -45,7 +45,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <iostream>
 
-GraphCutSegmentationWidget::GraphCutSegmentationWidget(QWidget *parent)
+GraphCutSegmentationWidget::GraphCutSegmentationWidget(const std::string& fileName) : QMainWindow(NULL)
+{
+  SharedConstructor();
+  OpenFile(fileName);
+}
+
+GraphCutSegmentationWidget::GraphCutSegmentationWidget(QWidget *parent) : QMainWindow(parent)
+{
+  SharedConstructor();
+}
+
+void GraphCutSegmentationWidget::SharedConstructor()
 {
   // Setup the GUI and connect all of the signals and slots
   setupUi(this);
@@ -111,7 +122,6 @@ GraphCutSegmentationWidget::GraphCutSegmentationWidget(QWidget *parent)
   actionSaveSegmentation->setIcon(saveIcon);
   this->toolBar->addAction(actionSaveSegmentation);
 }
-
 void GraphCutSegmentationWidget::on_actionExit_triggered()
 {
   exit(0);
@@ -171,7 +181,17 @@ void GraphCutSegmentationWidget::on_actionSaveSegmentation_triggered()
 void GraphCutSegmentationWidget::on_actionOpenImage_triggered()
 {
   //std::cout << "actionOpenImage_triggered()" << std::endl;
-  OpenFile();
+    //std::cout << "Enter OpenFile()" << std::endl;
+
+  // Get a filename to open
+  QString filename = QFileDialog::getOpenFileName(this,
+     "Open Image", ".", "Image Files (*.png *.mha)");
+
+  if(filename.isEmpty())
+    {
+    return;
+    }
+  OpenFile(filename.toStdString());
 }
 
 
@@ -392,26 +412,16 @@ void InnerWidget::actionSave_Segmentation_triggered()
 }
 #endif
 
-void GraphCutSegmentationWidget::OpenFile()
+void GraphCutSegmentationWidget::OpenFile(const std::string& fileName)
 {
-  //std::cout << "Enter OpenFile()" << std::endl;
-  
-  // Get a filename to open
-  QString filename = QFileDialog::getOpenFileName(this,
-     "Open Image", ".", "Image Files (*.png *.mha)");
 
-  if(filename.isEmpty())
-    {
-    return;
-    }
 
   // Clear the scribbles
   this->GraphCutStyle->ClearSelections();
 
   // Read file
   itk::ImageFileReader<ImageType>::Pointer reader = itk::ImageFileReader<ImageType>::New();
-
-  reader->SetFileName(filename.toStdString());
+  reader->SetFileName(fileName);
   reader->Update();
 
   this->ImageRegion = reader->GetOutput()->GetLargestPossibleRegion();
