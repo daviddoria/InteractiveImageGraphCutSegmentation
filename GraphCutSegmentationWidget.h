@@ -27,8 +27,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "ui_GraphCutSegmentationWidget.h"
 
+// Qt
+#include <QFutureWatcher>
+#include <QProgressDialog>
+
 // Custom
-#include "ProgressThread.h"
 #include "vtkScribbleInteractorStyle.h"
 
 class GraphCutSegmentationWidget : public QMainWindow, private Ui::GraphCutSegmentationWidget
@@ -54,28 +57,22 @@ public slots:
   void sldHistogramBins_valueChanged();
   void on_sldRGBWeight_valueChanged();
 
+  void slot_SegmentationComplete();
+
   /** Setting lambda must be handled specially because we need to multiply the
    *  percentage set by the slider by the MaxLambda set in the text box
    */
   void UpdateLambda();
 
-  /** These slots handle running the progress bar while the computations are done in a separate thread. */
-  void StartProgressSlot();
-  void StopProgressSlot();
-
   /** Open the specified file as a greyscale or color image,
    *  depending on which type the user has specified through the file menu.
    */
   void OpenFile(const std::string& fileName);
-  
-  
+
 protected:
 
   /** A constructor that can be used by all other constructors. */
   void SharedConstructor();
-  
-  /** A class to do the main computations in a separate thread so we can display a marquee progress bar. */
-  ProgressThread<ImageType> SegmentationThread;
 
   /** Compute lambda by multiplying the percentage set by the slider by the MaxLambda set in the text box. */
   float ComputeLambda();
@@ -107,6 +104,9 @@ protected:
 
   /** We set this when the image is opeend. We sometimes need to know how big the image is.*/
   itk::ImageRegion<2> ImageRegion;
+
+  QFutureWatcher<void> FutureWatcher;
+  QProgressDialog* ProgressDialog;
 };
 
 #endif

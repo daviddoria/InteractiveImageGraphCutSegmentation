@@ -6,7 +6,7 @@ FIND_PACKAGE(Qt4 REQUIRED)
 INCLUDE(${QT_USE_FILE})
 
 QT4_WRAP_UI(GraphCutSegmentationUISrcs GraphCutSegmentationWidget.ui)
-QT4_WRAP_CPP(GraphCutSegmentationMOCSrcs GraphCutSegmentationWidget.h ProgressThread.h)
+QT4_WRAP_CPP(GraphCutSegmentationMOCSrcs GraphCutSegmentationWidget.h)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
@@ -24,7 +24,7 @@ Helpers.cpp
 vtkScribbleInteractorStyle.cxx
 ImageGraphCut.cxx
 ${GraphCutSegmentationMOCSrcs} ${GraphCutSegmentationUISrcs})
-TARGET_LINK_LIBRARIES(InteractiveImageGraphCutSegmentation vtkHybrid vtkWidgets
+TARGET_LINK_LIBRARIES(InteractiveImageGraphCutSegmentation ${VTK_LIBRARIES}
 QVTK ${QT_LIBRARIES} QtXml MaxFlow
 ${ITK_LIBRARIES}
 )

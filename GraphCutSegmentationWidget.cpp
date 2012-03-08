@@ -42,7 +42,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFileDialog>
 #include <QLineEdit>
 #include <QMessageBox>
+#include <QtConcurrentRun>
 
+// STL
 #include <iostream>
 
 GraphCutSegmentationWidget::GraphCutSegmentationWidget(const std::string& fileName) : QMainWindow(NULL)
@@ -61,11 +63,13 @@ void GraphCutSegmentationWidget::SharedConstructor()
   // Setup the GUI and connect all of the signals and slots
   setupUi(this);
 
+  this->ProgressDialog = new QProgressDialog();
+  connect(&this->FutureWatcher, SIGNAL(finished()), this, SLOT(slot_SegmentationComplete()));
+  connect(&this->FutureWatcher, SIGNAL(finished()), this->ProgressDialog , SLOT(cancel()));
+  
   connect( this->sldHistogramBins, SIGNAL( valueChanged(int) ), this, SLOT(sldHistogramBins_valueChanged()));
   connect( this->sldLambda, SIGNAL( valueChanged(int) ), this, SLOT(UpdateLambda()));
   connect( this->txtLambdaMax, SIGNAL( textEdited(QString) ), this, SLOT(UpdateLambda()));
-  connect(&SegmentationThread, SIGNAL(StartProgressSignal()), this, SLOT(StartProgressSlot()), Qt::QueuedConnection);
-  connect(&SegmentationThread, SIGNAL(StopProgressSignal()), this, SLOT(StopProgressSlot()), Qt::QueuedConnection);
 
   // Set the progress bar to marquee mode
   this->progressBar->setMinimum(0);
@@ -194,13 +198,6 @@ void GraphCutSegmentationWidget::on_actionOpenImage_triggered()
   OpenFile(filename.toStdString());
 }
 
-
-void GraphCutSegmentationWidget::StartProgressSlot()
-{
-  // Connected to the StartProgressSignal of the ProgressThread member
-  this->progressBar->show();
-}
-
 /*
  // Display segmented image with black background pixels
 void Form::StopProgressSlot()
@@ -241,7 +238,7 @@ void Form::StopProgressSlot()
 */
 
 // Display segmented image with transparent background pixels
-void GraphCutSegmentationWidget::StopProgressSlot()
+void GraphCutSegmentationWidget::slot_SegmentationComplete()
 {
   // When the ProgressThread emits the StopProgressSignal, we need to display the result of the segmentation
 
@@ -364,9 +361,14 @@ void GraphCutSegmentationWidget::on_btnCut_clicked()
   this->GraphCut.SetSources(this->GraphCutStyle->GetForegroundSelection());
   this->GraphCut.SetSinks(this->GraphCutStyle->GetBackgroundSelection());
 
-  // Setup and start the actual cut computation in a different thread
-  this->SegmentationThread.GraphCut = &(this->GraphCut);
-  SegmentationThread.start();
+  /////////////
+  QFuture<void> future = QtConcurrent::run(this->GraphCut, &ImageGraphCut::PerformSegmentation);
+  this->FutureWatcher.setFuture(future);
+
+  this->ProgressDialog->setMinimum(0);
+  this->ProgressDialog->setMaximum(0);
+  this->ProgressDialog->setWindowModality(Qt::WindowModal);
+  this->ProgressDialog->exec();
 
 }
 
