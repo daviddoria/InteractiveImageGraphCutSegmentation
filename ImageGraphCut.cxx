@@ -35,7 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // Qt
 #include <QMessageBox>
 
-void ImageGraphCut::SetImage(ImageType::Pointer image)
+void ImageGraphCut::SetImage(ImageType* const image)
 {
 
   this->Image = ImageType::New();
@@ -362,7 +362,7 @@ void ImageGraphCut::CreateGraph()
     }
 }
 
-float ImageGraphCut::PixelDifference(PixelType a, PixelType b)
+float ImageGraphCut::PixelDifference(const PixelType& a, const PixelType& b)
 {
   // Compute the Euclidean distance between N dimensional pixels
   float difference = 0;
@@ -445,7 +445,7 @@ double ImageGraphCut::ComputeNoise()
 }
 
 
-void ImageGraphCut::SetRGBWeight(float weight)
+void ImageGraphCut::SetRGBWeight(const float weight)
 {
   this->RGBWeight = weight;
 }
@@ -455,7 +455,7 @@ std::vector<itk::Index<2> > ImageGraphCut::GetSources()
   return this->Sources;
 }
 
-void ImageGraphCut::SetLambda(float lambda)
+void ImageGraphCut::SetLambda(const float lambda)
 {
   this->Lambda = lambda;
 }
@@ -480,7 +480,7 @@ bool ImageGraphCut::IsNaN(const double a)
   return a != a;
 }
 
-void ImageGraphCut::SetSources(vtkPolyData* sources)
+void ImageGraphCut::SetSources(vtkPolyData* const sources)
 {
   // Convert the vtkPolyData produced by the vtkImageTracerWidget to a list of pixel indices
 
@@ -503,7 +503,7 @@ void ImageGraphCut::SetSources(vtkPolyData* sources)
 
 }
 
-void ImageGraphCut::SetSinks(vtkPolyData* sinks)
+void ImageGraphCut::SetSinks(vtkPolyData* const sinks)
 {
   // Convert the vtkPolyData produced by the vtkImageTracerWidget to a list of pixel indices
 
@@ -526,12 +526,12 @@ void ImageGraphCut::SetSinks(vtkPolyData* sinks)
 
 }
 
-void ImageGraphCut::SetSources(std::vector<itk::Index<2> > sources)
+void ImageGraphCut::SetSources(const std::vector<itk::Index<2> >& sources)
 {
   this->Sources = sources;
 }
 
-void ImageGraphCut::SetSinks(std::vector<itk::Index<2> > sinks)
+void ImageGraphCut::SetSinks(const std::vector<itk::Index<2> >& sinks)
 {
   this->Sinks = sinks;
 }

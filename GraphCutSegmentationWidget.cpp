@@ -416,8 +416,6 @@ void InnerWidget::actionSave_Segmentation_triggered()
 
 void GraphCutSegmentationWidget::OpenFile(const std::string& fileName)
 {
-
-
   // Clear the scribbles
   this->GraphCutStyle->ClearSelections();
 
@@ -451,7 +449,7 @@ void GraphCutSegmentationWidget::OpenFile(const std::string& fileName)
     {
     this->GraphCutStyle->SetInteractionModeToForeground();
     }
-    
+
   //std::cout << "Exit OpenFile()" << std::endl;
 }
 

@@ -52,7 +52,7 @@ public:
   //void SetSinks(vtkPolyData* sinks);
 
   // Several initializations are done here
-  void SetImage(ImageType::Pointer image);
+  void SetImage(ImageType* const image);
 
   // Create and cut the graph (The main driver function)
   void PerformSegmentation();
@@ -65,23 +65,23 @@ public:
   std::vector<itk::Index<2> > GetSinks();
 
   // Set the selected (via scribbling) pixels
-  void SetSources(vtkPolyData* sources);
-  void SetSinks(vtkPolyData* sinks);
+  void SetSources(vtkPolyData* const sources);
+  void SetSinks(vtkPolyData* const sinks);
 
-  void SetSources(std::vector<itk::Index<2> > sources);
-  void SetSinks(std::vector<itk::Index<2> > sinks);
+  void SetSources(const std::vector<itk::Index<2> >& sources);
+  void SetSinks(const std::vector<itk::Index<2> >& sinks);
 
   // Get the output of the segmentation
   MaskImageType::Pointer GetSegmentMask();
 
   // Set the weight between the regional and boundary terms
-  void SetLambda(float);
+  void SetLambda(const float);
 
   // Set the weight of the RGB components of the pixels vs the rest of the components
-  void SetRGBWeight(float);
+  void SetRGBWeight(const float);
 
   // Set the number of bins per dimension of the foreground and background histograms
-  void SetNumberOfHistogramBins(int);
+  void SetNumberOfHistogramBins(const int);
 
 protected:
 
@@ -128,7 +128,7 @@ protected:
   // Perform the s-t min cut
   void CutGraph();
 
-  float PixelDifference(PixelType, PixelType);
+  float PixelDifference(const PixelType& a, const PixelType& b);
 
   // Member variables
   SampleType::Pointer ForegroundSample;
