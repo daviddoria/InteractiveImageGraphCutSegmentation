@@ -64,17 +64,15 @@ void GraphCutSegmentationWidget::SharedConstructor()
   setupUi(this);
 
   this->ProgressDialog = new QProgressDialog();
+  this->ProgressDialog->setMinimum(0);
+  this->ProgressDialog->setMaximum(0);
+  this->ProgressDialog->setWindowModality(Qt::WindowModal);
   connect(&this->FutureWatcher, SIGNAL(finished()), this, SLOT(slot_SegmentationComplete()));
   connect(&this->FutureWatcher, SIGNAL(finished()), this->ProgressDialog , SLOT(cancel()));
   
   connect( this->sldHistogramBins, SIGNAL( valueChanged(int) ), this, SLOT(sldHistogramBins_valueChanged()));
   connect( this->sldLambda, SIGNAL( valueChanged(int) ), this, SLOT(UpdateLambda()));
   connect( this->txtLambdaMax, SIGNAL( textEdited(QString) ), this, SLOT(UpdateLambda()));
-
-  // Set the progress bar to marquee mode
-  this->progressBar->setMinimum(0);
-  this->progressBar->setMaximum(0);
-  this->progressBar->hide();
 
   this->BackgroundColor[0] = 0;
   this->BackgroundColor[1] = 0;
@@ -88,7 +86,8 @@ void GraphCutSegmentationWidget::SharedConstructor()
   this->OriginalImageActor = vtkSmartPointer<vtkImageActor>::New();
   this->ResultActor = vtkSmartPointer<vtkImageActor>::New();
 
-  // Add renderers - we flip the image by changing the camera view up because of the conflicting conventions used by ITK and VTK
+  // Add renderers - we flip the image by changing the camera view up because of the conflicting
+  // conventions used by ITK and VTK
   this->LeftRenderer = vtkSmartPointer<vtkRenderer>::New();
   this->LeftRenderer->GradientBackgroundOn();
   this->LeftRenderer->SetBackground(this->BackgroundColor);
@@ -131,9 +130,17 @@ void GraphCutSegmentationWidget::on_actionExit_triggered()
   exit(0);
 }
 
-void GraphCutSegmentationWidget::on_actionFlipImage_triggered()
+void GraphCutSegmentationWidget::on_actionFlipImageVertically_triggered()
 {
   this->CameraUp[1] *= -1;
+  this->LeftRenderer->GetActiveCamera()->SetViewUp(this->CameraUp);
+  this->RightRenderer->GetActiveCamera()->SetViewUp(this->CameraUp);
+  this->Refresh();
+}
+
+void GraphCutSegmentationWidget::on_actionFlipImageHorizontally_triggered()
+{
+  this->CameraUp[0] *= -1;
   this->LeftRenderer->GetActiveCamera()->SetViewUp(this->CameraUp);
   this->RightRenderer->GetActiveCamera()->SetViewUp(this->CameraUp);
   this->Refresh();
@@ -258,13 +265,11 @@ void GraphCutSegmentationWidget::slot_SegmentationComplete()
 
   // Remove the old output, set the new output and refresh everything
   //this->ResultActor = vtkSmartPointer<vtkImageActor>::New();
-  this->ResultActor->SetInput(VTKMaskedImage);
+  this->ResultActor->SetInputData(VTKMaskedImage);
   this->RightRenderer->RemoveAllViewProps();
   this->RightRenderer->AddActor(ResultActor);
   this->RightRenderer->ResetCamera();
   this->Refresh();
-
-  this->progressBar->hide();
 }
 
 float GraphCutSegmentationWidget::ComputeLambda()
@@ -306,20 +311,24 @@ void GraphCutSegmentationWidget::on_radBackground_clicked()
   this->GraphCutStyle->SetInteractionModeToBackground();
 }
 
-void GraphCutSegmentationWidget::on_btnClearSelections_clicked()
+void GraphCutSegmentationWidget::on_actionClearForegroundSelection_activated()
 {
-  this->GraphCutStyle->ClearSelections();
+  this->GraphCutStyle->ClearForegroundSelections();
 }
 
-void GraphCutSegmentationWidget::on_btnSaveSelections_clicked()
+void GraphCutSegmentationWidget::on_actionClearBackgroundSelection_activated()
+{
+  this->GraphCutStyle->ClearBackgroundSelections();
+}
+
+void GraphCutSegmentationWidget::on_actionSaveForegroundSelection_activated()
 {
   QString directoryName = QFileDialog::getExistingDirectory(this,
      "Open Directory", QDir::homePath(), QFileDialog::ShowDirsOnly);
 
   std::string foregroundFilename = QDir(directoryName).absoluteFilePath("foreground.png").toStdString();
-  std::string backgroundFilename = QDir(directoryName).absoluteFilePath("background.png").toStdString();
 
-  std::cout << "Writing to " << foregroundFilename << " and " << backgroundFilename << std::endl;
+  std::cout << "Writing to " << foregroundFilename << std::endl;
 
   UnsignedCharScalarImageType::Pointer foregroundImage = UnsignedCharScalarImageType::New();
   foregroundImage->SetRegions(this->ImageRegion);
@@ -331,6 +340,25 @@ void GraphCutSegmentationWidget::on_btnSaveSelections_clicked()
   writer->SetFileName(foregroundFilename);
   writer->SetInput(foregroundImage);
   writer->Update();
+}
+
+
+void GraphCutSegmentationWidget::on_actionSaveBackgroundSelection_activated()
+{
+  QString directoryName = QFileDialog::getExistingDirectory(this,
+     "Open Directory", QDir::homePath(), QFileDialog::ShowDirsOnly);
+
+  std::string backgroundFilename = QDir(directoryName).absoluteFilePath("background.png").toStdString();
+
+  std::cout << "Writing to " << backgroundFilename << std::endl;
+
+  UnsignedCharScalarImageType::Pointer foregroundImage = UnsignedCharScalarImageType::New();
+  foregroundImage->SetRegions(this->ImageRegion);
+  foregroundImage->Allocate();
+  Helpers::IndicesToBinaryImage(this->GraphCutStyle->GetForegroundSelection(), foregroundImage);
+
+  typedef  itk::ImageFileWriter< UnsignedCharScalarImageType  > WriterType;
+  WriterType::Pointer writer = WriterType::New();
 
   UnsignedCharScalarImageType::Pointer backgroundImage = UnsignedCharScalarImageType::New();
   backgroundImage->SetRegions(this->ImageRegion);
@@ -434,7 +462,7 @@ void GraphCutSegmentationWidget::OpenFile(const std::string& fileName)
 
   this->LeftRenderer->RemoveAllViewProps();
 
-  this->OriginalImageActor->SetInput(VTKImage);
+  this->OriginalImageActor->SetInputData(VTKImage);
   this->GraphCutStyle->InitializeTracer(this->OriginalImageActor);
 
   this->LeftRenderer->ResetCamera();

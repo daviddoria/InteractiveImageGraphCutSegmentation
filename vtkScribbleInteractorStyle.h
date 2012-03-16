@@ -51,8 +51,14 @@ public:
   std::vector<itk::Index<2> > GetForegroundSelection();
   std::vector<itk::Index<2> > GetBackgroundSelection();
 
-  // Empty both the foreground and background selection
+  /** Empty both the foreground and background selection */
   void ClearSelections();
+
+  /** Empty the foreground selection */
+  void ClearForegroundSelections();
+
+  /** Empty the background selection */
+  void ClearBackgroundSelections();
 
   // Connect the tracer to the interactor, etc.
   void InitializeTracer(vtkImageActor* imageActor);
@@ -60,20 +66,20 @@ public:
 private:
   void Refresh();
 
-  // Update the selection when the EndInteraction event is fired.
+  /** Update the selection when the EndInteraction event is fired. */
   void CatchWidgetEvent(vtkObject* caller, long unsigned int eventId, void* callData);
 
-  // The state (foreground or background) of the selection.
+  /** The state (foreground or background) of the selection. */
   int SelectionType;
 
-  // The widget which does most of the work.
+  /** The widget which does most of the work. */
   vtkSmartPointer<vtkImageTracerWidget> Tracer;
 
-  // Keep track of the pixels the user selected.
+  /** Keep track of the pixels the user selected. */
   std::vector<itk::Index<2> > ForegroundSelection;
   std::vector<itk::Index<2> > BackgroundSelection;
 
-  // Data, mapper, and actor for the selections
+  /** Data, mapper, and actor for the selections */
   vtkSmartPointer<vtkPolyData> ForegroundSelectionPolyData;
   vtkSmartPointer<vtkPolyData> BackgroundSelectionPolyData;
 
@@ -86,6 +92,6 @@ private:
 };
 
 // Helpers
-std::vector<itk::Index<2> > PolyDataToPixelList(vtkPolyData* polydata);
+std::vector<itk::Index<2> > PolyDataToPixelList(vtkPolyData* const polydata);
 
 #endif

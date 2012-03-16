@@ -22,7 +22,7 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout_2">
     <item row="0" column="0">
-     <layout class="QGridLayout" name="gridLayout" rowstretch="1,17,6">
+     <layout class="QGridLayout" name="gridLayout" rowstretch="1,17,6" columnstretch="1,1">
       <item row="0" column="0">
        <widget class="QLabel" name="label_9">
         <property name="text">
@@ -44,377 +44,193 @@
        <widget class="QVTKWidget" name="qvtkWidgetRight"/>
       </item>
       <item row="2" column="0">
-       <widget class="QGroupBox" name="grpSelection">
-        <property name="styleSheet">
-         <string notr="true">QGroupBox#grpSelection { 
-     border: 2px solid gray; 
-     border-radius: 3px; 
- } 
-
-QGroupBox#grpSelection::title { 
-    background-color: transparent;
- } </string>
-        </property>
-        <property name="title">
-         <string>Selection properties</string>
-        </property>
-        <widget class="QRadioButton" name="radBackground">
-         <property name="geometry">
-          <rect>
-           <x>30</x>
-           <y>80</y>
-           <width>106</width>
-           <height>21</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>Background</string>
-         </property>
-        </widget>
-        <widget class="QRadioButton" name="radForeground">
-         <property name="geometry">
-          <rect>
-           <x>30</x>
-           <y>50</y>
-           <width>106</width>
-           <height>21</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>Foreground</string>
-         </property>
-        </widget>
-        <widget class="QPushButton" name="btnClearSelections">
-         <property name="geometry">
-          <rect>
-           <x>170</x>
-           <y>50</y>
-           <width>121</width>
-           <height>41</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>Clear Selections</string>
-         </property>
-        </widget>
-        <widget class="QPushButton" name="btnSaveSelections">
-         <property name="geometry">
-          <rect>
-           <x>170</x>
-           <y>100</y>
-           <width>121</width>
-           <height>41</height>
-          </rect>
-         </property>
-         <property name="toolTip">
-          <string>The foreground and background pixels will be saved as binary images in X_Foreground.png and X_Background.png where X is specified in the file save diaglog.</string>
-         </property>
-         <property name="text">
-          <string>Save Selections</string>
-         </property>
-        </widget>
-       </widget>
+       <layout class="QVBoxLayout" name="verticalLayout">
+        <item>
+         <widget class="QRadioButton" name="radForeground">
+          <property name="text">
+           <string>Foreground</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QRadioButton" name="radBackground">
+          <property name="text">
+           <string>Background</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
       <item row="2" column="1">
-       <widget class="QGroupBox" name="groupBox">
-        <property name="styleSheet">
-         <string notr="true">QGroupBox#groupBox { 
-     border: 2px solid gray; 
-     border-radius: 3px; 
- } 
-
-QGroupBox#groupBox::title { 
-    background-color: transparent;
- } </string>
-        </property>
-        <property name="title">
-         <string/>
-        </property>
-        <property name="flat">
-         <bool>false</bool>
-        </property>
-        <widget class="QLabel" name="label_3">
-         <property name="geometry">
-          <rect>
-           <x>30</x>
-           <y>30</y>
-           <width>91</width>
-           <height>17</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>LambdaMax</string>
-         </property>
-        </widget>
-        <widget class="QLineEdit" name="txtLambdaMax">
-         <property name="geometry">
-          <rect>
-           <x>120</x>
-           <y>30</y>
-           <width>41</width>
-           <height>27</height>
-          </rect>
-         </property>
-         <property name="toolTip">
-          <string>The value of Lambda if the slider is set to 100%</string>
-         </property>
-         <property name="text">
-          <string>.05</string>
-         </property>
-        </widget>
-        <widget class="QLabel" name="label">
-         <property name="geometry">
-          <rect>
-           <x>30</x>
-           <y>60</y>
-           <width>131</width>
-           <height>17</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>% of LambdaMax</string>
-         </property>
-        </widget>
-        <widget class="QSlider" name="sldLambda">
-         <property name="geometry">
-          <rect>
-           <x>30</x>
-           <y>80</y>
-           <width>160</width>
-           <height>19</height>
-          </rect>
-         </property>
-         <property name="toolTip">
-          <string>The percentage of LambdaMax to use as Lambda</string>
-         </property>
-         <property name="value">
-          <number>50</number>
-         </property>
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-        </widget>
-        <widget class="QLabel" name="lblLambda">
-         <property name="geometry">
-          <rect>
-           <x>220</x>
-           <y>50</y>
-           <width>51</width>
-           <height>17</height>
-          </rect>
-         </property>
-         <property name="toolTip">
-          <string>The final value of Labmda to use. When Lambda is high, there is no regularization. That is, each pixel decides its label independently (does not care about the labeling of its neighbors).</string>
-         </property>
-         <property name="text">
-          <string>.025</string>
-         </property>
-        </widget>
-        <widget class="QLabel" name="label_4">
-         <property name="geometry">
-          <rect>
-           <x>210</x>
-           <y>30</y>
-           <width>64</width>
-           <height>17</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>Lambda</string>
-         </property>
-        </widget>
-        <widget class="QLabel" name="label_6">
-         <property name="geometry">
-          <rect>
-           <x>190</x>
-           <y>80</y>
-           <width>41</width>
-           <height>17</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>100%</string>
-         </property>
-        </widget>
-        <widget class="QLabel" name="label_5">
-         <property name="geometry">
-          <rect>
-           <x>10</x>
-           <y>80</y>
-           <width>21</width>
-           <height>17</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>0%</string>
-         </property>
-        </widget>
-        <widget class="QSlider" name="sldHistogramBins">
-         <property name="geometry">
-          <rect>
-           <x>30</x>
-           <y>130</y>
-           <width>160</width>
-           <height>19</height>
-          </rect>
-         </property>
-         <property name="toolTip">
-          <string>The higher this value, the more discriminative the regional term will be.</string>
-         </property>
-         <property name="value">
-          <number>40</number>
-         </property>
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-        </widget>
-        <widget class="QLabel" name="lblHistogramBins">
-         <property name="geometry">
-          <rect>
-           <x>240</x>
-           <y>110</y>
-           <width>41</width>
-           <height>16</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>20</string>
-         </property>
-        </widget>
-        <widget class="QLabel" name="label_2">
-         <property name="geometry">
-          <rect>
-           <x>30</x>
-           <y>110</y>
-           <width>211</width>
-           <height>20</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>Histogram Bins Per Dimension:</string>
-         </property>
-        </widget>
-        <widget class="QPushButton" name="btnCut">
-         <property name="geometry">
-          <rect>
-           <x>313</x>
-           <y>10</y>
-           <width>91</width>
-           <height>27</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>Cut Graph</string>
-         </property>
-        </widget>
-        <widget class="QProgressBar" name="progressBar">
-         <property name="geometry">
-          <rect>
-           <x>303</x>
-           <y>40</y>
-           <width>118</width>
-           <height>23</height>
-          </rect>
-         </property>
-         <property name="value">
-          <number>24</number>
-         </property>
-        </widget>
-        <widget class="QLabel" name="label_7">
-         <property name="geometry">
-          <rect>
-           <x>20</x>
-           <y>130</y>
-           <width>16</width>
-           <height>17</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>1</string>
-         </property>
-        </widget>
-        <widget class="QLabel" name="label_8">
-         <property name="geometry">
-          <rect>
-           <x>190</x>
-           <y>130</y>
-           <width>21</width>
-           <height>17</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>99</string>
-         </property>
-        </widget>
-        <widget class="QSlider" name="sldRGBWeight">
-         <property name="geometry">
-          <rect>
-           <x>30</x>
-           <y>160</y>
-           <width>160</width>
-           <height>29</height>
-          </rect>
-         </property>
-         <property name="value">
-          <number>50</number>
-         </property>
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-        </widget>
-        <widget class="QLabel" name="label_11">
-         <property name="geometry">
-          <rect>
-           <x>40</x>
-           <y>150</y>
-           <width>101</width>
-           <height>17</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>RGB Weight</string>
-         </property>
-        </widget>
-        <widget class="QLabel" name="label_12">
-         <property name="geometry">
-          <rect>
-           <x>10</x>
-           <y>170</y>
-           <width>21</width>
-           <height>17</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>0</string>
-         </property>
-        </widget>
-        <widget class="QLabel" name="label_13">
-         <property name="geometry">
-          <rect>
-           <x>200</x>
-           <y>170</y>
-           <width>21</width>
-           <height>17</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>1</string>
-         </property>
-        </widget>
-        <widget class="QLabel" name="lblRGBWeight">
-         <property name="geometry">
-          <rect>
-           <x>220</x>
-           <y>170</y>
-           <width>31</width>
-           <height>17</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>.5</string>
-         </property>
-        </widget>
-       </widget>
+       <layout class="QVBoxLayout" name="verticalLayout_2">
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <item>
+           <widget class="QLabel" name="label_3">
+            <property name="text">
+             <string>LambdaMax</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="txtLambdaMax">
+            <property name="toolTip">
+             <string>The value of Lambda if the slider is set to 100%</string>
+            </property>
+            <property name="text">
+             <string>.05</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout">
+          <item>
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string>% of LambdaMax</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_5">
+            <property name="text">
+             <string>0%</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSlider" name="sldLambda">
+            <property name="toolTip">
+             <string>The percentage of LambdaMax to use as Lambda</string>
+            </property>
+            <property name="value">
+             <number>50</number>
+            </property>
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_6">
+            <property name="text">
+             <string>100%</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="lblLambda">
+            <property name="toolTip">
+             <string>The final value of Labmda to use. When Lambda is high, there is no regularization. That is, each pixel decides its label independently (does not care about the labeling of its neighbors).</string>
+            </property>
+            <property name="text">
+             <string>.025</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_3">
+          <item>
+           <widget class="QLabel" name="label_2">
+            <property name="text">
+             <string>Histogram Bins Per Dimension:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_7">
+            <property name="text">
+             <string>1</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSlider" name="sldHistogramBins">
+            <property name="toolTip">
+             <string>The higher this value, the more discriminative the regional term will be.</string>
+            </property>
+            <property name="value">
+             <number>40</number>
+            </property>
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_8">
+            <property name="text">
+             <string>99</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="lblHistogramBins">
+            <property name="text">
+             <string>20</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_4">
+          <item>
+           <widget class="QLabel" name="label_11">
+            <property name="text">
+             <string>RGB Weight</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_12">
+            <property name="text">
+             <string>0</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSlider" name="sldRGBWeight">
+            <property name="value">
+             <number>50</number>
+            </property>
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_13">
+            <property name="text">
+             <string>1</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="lblRGBWeight">
+            <property name="text">
+             <string>.5</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_5">
+          <item>
+           <widget class="QPushButton" name="btnCut">
+            <property name="text">
+             <string>Cut Graph</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
       </item>
      </layout>
     </item>
@@ -426,7 +242,7 @@ QGroupBox#groupBox::title {
      <x>0</x>
      <y>0</y>
      <width>900</width>
-     <height>20</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -439,12 +255,30 @@ QGroupBox#groupBox::title {
    </widget>
    <widget class="QMenu" name="menuEdit">
     <property name="title">
-     <string>Edit</string>
+     <string>View</string>
     </property>
-    <addaction name="actionFlipImage"/>
+    <addaction name="actionFlipImageVertically"/>
+    <addaction name="actionFlipImageHorizontally"/>
+   </widget>
+   <widget class="QMenu" name="menuSelections">
+    <property name="title">
+     <string>Selections</string>
+    </property>
+    <addaction name="actionClearForegroundSelection"/>
+    <addaction name="actionClearBackgroundSelection"/>
+    <addaction name="actionSaveForegroundSelection"/>
+    <addaction name="actionSaveBackgroundSelection"/>
+   </widget>
+   <widget class="QMenu" name="menuExport">
+    <property name="title">
+     <string>Export</string>
+    </property>
+    <addaction name="actionExportSegmentedImage"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
+   <addaction name="menuSelections"/>
+   <addaction name="menuExport"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QToolBar" name="toolBar">
@@ -478,14 +312,44 @@ QGroupBox#groupBox::title {
     <string>Save Segmentation</string>
    </property>
   </action>
-  <action name="actionFlipImage">
+  <action name="actionFlipImageVertically">
    <property name="text">
-    <string>Flip Image</string>
+    <string>Flip Image Vertically</string>
    </property>
   </action>
   <action name="actionExit">
    <property name="text">
     <string>Exit</string>
+   </property>
+  </action>
+  <action name="actionFlipImageHorizontally">
+   <property name="text">
+    <string>Flip Image Horizontally</string>
+   </property>
+  </action>
+  <action name="actionClearForegroundSelection">
+   <property name="text">
+    <string>Clear Foreground</string>
+   </property>
+  </action>
+  <action name="actionClearBackgroundSelection">
+   <property name="text">
+    <string>Clear Background</string>
+   </property>
+  </action>
+  <action name="actionSaveForegroundSelection">
+   <property name="text">
+    <string>Save Foreground</string>
+   </property>
+  </action>
+  <action name="actionSaveBackgroundSelection">
+   <property name="text">
+    <string>Save Background</string>
+   </property>
+  </action>
+  <action name="actionExportSegmentedImage">
+   <property name="text">
+    <string>Segmented Image</string>
    </property>
   </action>
  </widget>
@@ -497,22 +361,5 @@ QGroupBox#groupBox::title {
   </customwidget>
  </customwidgets>
  <resources/>
- <connections>
-  <connection>
-   <sender>sldHistogramBins</sender>
-   <signal>sliderMoved(int)</signal>
-   <receiver>lblHistogramBins</receiver>
-   <slot>setNum(int)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>562</x>
-     <y>805</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>713</x>
-     <y>783</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>

@@ -51,7 +51,7 @@ vtkScribbleInteractorStyle::vtkScribbleInteractorStyle()
   this->ForegroundSelectionActor->SetMapper(this->ForegroundSelectionMapper);
   this->ForegroundSelectionActor->GetProperty()->SetLineWidth(4);
   this->ForegroundSelectionActor->GetProperty()->SetColor(0,1,0);
-  this->ForegroundSelectionMapper->SetInputConnection(this->ForegroundSelectionPolyData->GetProducerPort());
+  this->ForegroundSelectionMapper->SetInputData(this->ForegroundSelectionPolyData);
 
   // Background
   this->BackgroundSelectionPolyData = vtkSmartPointer<vtkPolyData>::New();
@@ -60,7 +60,7 @@ vtkScribbleInteractorStyle::vtkScribbleInteractorStyle()
   this->BackgroundSelectionActor->SetMapper(this->BackgroundSelectionMapper);
   this->BackgroundSelectionActor->GetProperty()->SetLineWidth(4);
   this->BackgroundSelectionActor->GetProperty()->SetColor(1,0,0);
-  this->BackgroundSelectionMapper->SetInputConnection(this->BackgroundSelectionPolyData->GetProducerPort());
+  this->BackgroundSelectionMapper->SetInputData(this->BackgroundSelectionPolyData);
 
   // Update the selection when the EndInteraction event is fired.
   this->Tracer->AddObserver(vtkCommand::EndInteractionEvent, this, &vtkScribbleInteractorStyle::CatchWidgetEvent);
@@ -125,7 +125,7 @@ void vtkScribbleInteractorStyle::CatchWidgetEvent(vtkObject* caller, long unsign
   // Create a filter which will be used to combine the most recent selection with previous selections
   vtkSmartPointer<vtkAppendPolyData> appendFilter =
     vtkSmartPointer<vtkAppendPolyData>::New();
-  appendFilter->AddInputConnection(path->GetProducerPort());
+  appendFilter->AddInputData(path);
 
   std::vector<itk::Index<2> > newPoints = PolyDataToPixelList(path);
   //std::cout << newPoints.size() << " new points." << std::endl;
@@ -133,7 +133,7 @@ void vtkScribbleInteractorStyle::CatchWidgetEvent(vtkObject* caller, long unsign
   // If we are in foreground mode, add the current selection to the foreground. Else, add it to the background.
   if(this->SelectionType == vtkScribbleInteractorStyle::FOREGROUND)
     {
-    appendFilter->AddInputConnection(this->ForegroundSelectionPolyData->GetProducerPort());
+    appendFilter->AddInputData(this->ForegroundSelectionPolyData);
     appendFilter->Update();
     this->ForegroundSelectionPolyData->ShallowCopy(appendFilter->GetOutput());
 
@@ -141,7 +141,7 @@ void vtkScribbleInteractorStyle::CatchWidgetEvent(vtkObject* caller, long unsign
     }
   else if(this->SelectionType == vtkScribbleInteractorStyle::BACKGROUND)
     {
-    appendFilter->AddInputConnection(this->BackgroundSelectionPolyData->GetProducerPort());
+    appendFilter->AddInputData(this->BackgroundSelectionPolyData);
     appendFilter->Update();
     this->BackgroundSelectionPolyData->ShallowCopy(appendFilter->GetOutput());
 
@@ -198,6 +198,27 @@ void vtkScribbleInteractorStyle::ClearSelections()
 
 }
 
+void vtkScribbleInteractorStyle::ClearForegroundSelections()
+{
+  // This seems like a silly way of emptying the polydatas...
+  vtkSmartPointer<vtkPolyData> empytPolyData =
+    vtkSmartPointer<vtkPolyData>::New();
+  this->ForegroundSelectionPolyData->ShallowCopy(empytPolyData);
+  this->ForegroundSelection.clear();
+  this->Refresh();
+}
+
+void vtkScribbleInteractorStyle::ClearBackgroundSelections()
+{
+  // This seems like a silly way of emptying the polydatas...
+  vtkSmartPointer<vtkPolyData> empytPolyData =
+    vtkSmartPointer<vtkPolyData>::New();
+  this->BackgroundSelectionPolyData->ShallowCopy(empytPolyData);
+
+  this->BackgroundSelection.clear();
+
+  this->Refresh();
+}
 
 std::vector<itk::Index<2> > PolyDataToPixelList(vtkPolyData* polydata)
 {

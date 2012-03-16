@@ -85,29 +85,28 @@ public:
 
 protected:
 
-
-  // A Kolmogorov graph object
+  /** A Kolmogorov graph object */
   GraphType* Graph;
 
-  // The output segmentation
+  /** The output segmentation */
   MaskImageType::Pointer SegmentMask;
 
-  // User specified foreground points
+  /** User specified foreground points */
   std::vector<itk::Index<2> > Sources;
 
-  // User specified background points
+  /** User specified background points */
   std::vector<itk::Index<2> > Sinks;
 
-  // The weighting between unary and binary terms
+  /** The weighting between unary and binary terms */
   float Lambda;
 
-  // The number of bins per dimension of the foreground and background histograms
+  /** The number of bins per dimension of the foreground and background histograms */
   int NumberOfHistogramBins;
 
-  // An image which keeps tracks of the mapping between pixel index and graph node id
+  /** An image which keeps tracks of the mapping between pixel index and graph node id */
   NodeImageType::Pointer NodeImage;
 
-  // Determine if a number is NaN
+  /** Determine if a number is NaN */
   bool IsNaN(const double a);
 
   float RGBWeight;
@@ -116,21 +115,21 @@ protected:
   typedef itk::Statistics::ListSample<PixelType> SampleType;
   typedef itk::Statistics::SampleToHistogramFilter<SampleType, HistogramType> SampleToHistogramFilterType;
 
-  // Create the histograms from the users selections
+  /** Create the histograms from the users selections */
   void CreateSamples();
 
-  // Estimate the "camera noise"
+  /** Estimate the "camera noise" */
   double ComputeNoise();
 
-  // Create a Kolmogorov graph structure from the image and selections
+  /** Create a Kolmogorov graph structure from the image and selections */
   void CreateGraph();
 
-  // Perform the s-t min cut
+  /** Perform the s-t min cut */
   void CutGraph();
 
   float PixelDifference(const PixelType& a, const PixelType& b);
 
-  // Member variables
+  // Member variables */
   SampleType::Pointer ForegroundSample;
   SampleType::Pointer BackgroundSample;
 
@@ -140,7 +139,7 @@ protected:
   SampleToHistogramFilterType::Pointer ForegroundHistogramFilter;
   SampleToHistogramFilterType::Pointer BackgroundHistogramFilter;
 
-  // The image to be segmented
+  /** The image to be segmented */
   ImageType::Pointer Image;
 
 };

@@ -43,14 +43,21 @@ public:
 
 public slots:
   /** Menu items*/
+  // View menu
+  void on_actionFlipImageVertically_triggered();
+  void on_actionFlipImageHorizontally_triggered();
+
+  // File menu
+  void on_actionExit_triggered();
   void on_actionOpenImage_triggered();
   void on_actionSaveSegmentation_triggered();
-  void on_actionFlipImage_triggered();
-  void on_actionExit_triggered();
 
   /** Buttons, radio buttons, and sliders*/
-  void on_btnClearSelections_clicked();
-  void on_btnSaveSelections_clicked();
+  void on_actionSaveForegroundSelection_activated();
+  void on_actionSaveBackgroundSelection_activated();
+  void on_actionClearBackgroundSelection_activated();
+  void on_actionClearForegroundSelection_activated();
+
   void on_btnCut_clicked();
   void on_radForeground_clicked();
   void on_radBackground_clicked();
