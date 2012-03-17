@@ -87,6 +87,9 @@ protected:
   /** Our scribble interactor style */
   vtkSmartPointer<vtkScribbleInteractorStyle> GraphCutStyle;
 
+  /** The interactor style for the resulting segmented image. */
+  vtkSmartPointer<vtkInteractorStyleImage> RightInteractorStyle;
+  
   /** The input and output image actors */
   vtkSmartPointer<vtkImageActor> OriginalImageActor;
   vtkSmartPointer<vtkImageActor> ResultActor;
@@ -107,8 +110,11 @@ protected:
   double BackgroundColor[3];
 
   /** Allows the image to be flipped so that it is "right side up"*/
-  double CameraUp[3];
+  double CameraLeftToRight[3];
+  double CameraBottomToTop[3];
 
+  void SetupCameras();
+  
   /** We set this when the image is opeend. We sometimes need to know how big the image is.*/
   itk::ImageRegion<2> ImageRegion;
 

@@ -78,9 +78,17 @@ void GraphCutSegmentationWidget::SharedConstructor()
   this->BackgroundColor[1] = 0;
   this->BackgroundColor[2] = .5;
 
-  this->CameraUp[0] = 0;
-  this->CameraUp[1] = 1;
-  this->CameraUp[2] = 0;
+//   this->CameraUp[0] = 0;
+//   this->CameraUp[1] = 1;
+//   this->CameraUp[2] = 0;
+
+  CameraLeftToRight[0] = -1;
+  CameraLeftToRight[1] = 0;
+  CameraLeftToRight[2] = 0;
+  
+  CameraBottomToTop[0] = 0;
+  CameraBottomToTop[1] = 1;
+  CameraBottomToTop[2] = 0;
 
   // Instantiations
   this->OriginalImageActor = vtkSmartPointer<vtkImageActor>::New();
@@ -92,14 +100,15 @@ void GraphCutSegmentationWidget::SharedConstructor()
   this->LeftRenderer->GradientBackgroundOn();
   this->LeftRenderer->SetBackground(this->BackgroundColor);
   this->LeftRenderer->SetBackground2(1,1,1);
-  this->LeftRenderer->GetActiveCamera()->SetViewUp(this->CameraUp);
+  //this->LeftRenderer->GetActiveCamera()->SetViewUp(this->CameraUp);
+  
   this->qvtkWidgetLeft->GetRenderWindow()->AddRenderer(this->LeftRenderer);
 
   this->RightRenderer = vtkSmartPointer<vtkRenderer>::New();
   this->RightRenderer->GradientBackgroundOn();
   this->RightRenderer->SetBackground(this->BackgroundColor);
   this->RightRenderer->SetBackground2(1,1,1);
-  this->RightRenderer->GetActiveCamera()->SetViewUp(this->CameraUp);
+  //this->RightRenderer->GetActiveCamera()->SetViewUp(this->CameraUp);
   this->qvtkWidgetRight->GetRenderWindow()->AddRenderer(this->RightRenderer);
 
   // Setup right interactor style
@@ -111,6 +120,15 @@ void GraphCutSegmentationWidget::SharedConstructor()
   this->GraphCutStyle = vtkSmartPointer<vtkScribbleInteractorStyle>::New();
   this->qvtkWidgetLeft->GetInteractor()->SetInteractorStyle(this->GraphCutStyle);
 
+  // Without this, the flipping does not work until we interact with the image
+  this->GraphCutStyle->SetCurrentRenderer(this->LeftRenderer);
+
+  this->RightInteractorStyle = vtkSmartPointer<vtkInteractorStyleImage>::New();
+  this->qvtkWidgetRight->GetInteractor()->SetInteractorStyle(this->RightInteractorStyle);
+  this->RightInteractorStyle->SetCurrentRenderer(this->RightRenderer);
+
+  SetupCameras();
+  
   // Default GUI settings
   this->radForeground->setChecked(true);
 
@@ -130,20 +148,30 @@ void GraphCutSegmentationWidget::on_actionExit_triggered()
   exit(0);
 }
 
+void GraphCutSegmentationWidget::SetupCameras()
+{
+  this->GraphCutStyle->SetImageOrientation(CameraLeftToRight, CameraBottomToTop);
+  this->RightInteractorStyle->SetImageOrientation(CameraLeftToRight, CameraBottomToTop);
+
+  this->LeftRenderer->ResetCamera();
+  this->LeftRenderer->ResetCameraClippingRange();
+
+  this->RightRenderer->ResetCamera();
+  this->RightRenderer->ResetCameraClippingRange();
+
+  this->Refresh();
+}
+
 void GraphCutSegmentationWidget::on_actionFlipImageVertically_triggered()
 {
-  this->CameraUp[1] *= -1;
-  this->LeftRenderer->GetActiveCamera()->SetViewUp(this->CameraUp);
-  this->RightRenderer->GetActiveCamera()->SetViewUp(this->CameraUp);
-  this->Refresh();
+  CameraBottomToTop[1] *= -1;
+  SetupCameras();
 }
 
 void GraphCutSegmentationWidget::on_actionFlipImageHorizontally_triggered()
 {
-  this->CameraUp[0] *= -1;
-  this->LeftRenderer->GetActiveCamera()->SetViewUp(this->CameraUp);
-  this->RightRenderer->GetActiveCamera()->SetViewUp(this->CameraUp);
-  this->Refresh();
+  CameraLeftToRight[0] *= -1;
+  SetupCameras();
 }
 
 void GraphCutSegmentationWidget::on_actionSaveSegmentation_triggered()
