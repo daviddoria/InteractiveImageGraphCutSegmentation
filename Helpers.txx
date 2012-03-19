@@ -1,5 +1,8 @@
 #include "itkImageRegionConstIteratorWithIndex.h"
 
+#include "itkVectorImage.h"
+#include "itkVectorIndexSelectionCastImageFilter.h"
+
 namespace Helpers
 {
 
@@ -37,5 +40,20 @@ void ITKImagetoVTKImage<RGBDIImageType>(RGBDIImageType::Pointer image, vtkImageD
 #endif
 
 
+template<typename TPixel>
+void ExtractChannel(const itk::VectorImage<TPixel, 2>* const image, const unsigned int channel,
+                    itk::Image<TPixel, 2>* const output)
+{
+  typedef itk::VectorImage<TPixel, 2> VectorImageType;
+  typedef itk::Image<TPixel, 2> ScalarImageType;
+
+  typedef itk::VectorIndexSelectionCastImageFilter<VectorImageType, ScalarImageType > IndexSelectionType;
+  typename IndexSelectionType::Pointer indexSelectionFilter = IndexSelectionType::New();
+  indexSelectionFilter->SetIndex(channel);
+  indexSelectionFilter->SetInput(image);
+  indexSelectionFilter->Update();
+
+  DeepCopy(indexSelectionFilter->GetOutput(), output);
+}
 
 } // end namespace
