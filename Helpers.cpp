@@ -10,6 +10,7 @@
 // ITK
 #include "itkBresenhamLine.h"
 #include "itkImageRegionIterator.h"
+#include "itkMath.h"
 #include "itkVectorMagnitudeImageFilter.h"
 #include "itkRescaleIntensityImageFilter.h"
 
@@ -292,8 +293,10 @@ std::vector<itk::Index<2> > PolyDataToPixelList(vtkPolyData* polydata)
     itk::Index<2> index;
     double p[3];
     polydata->GetPoint(i,p);
-    index[0] = round(p[0]);
-    index[1] = round(p[1]);
+//     index[0] = round(p[0]);
+//     index[1] = round(p[1]);
+    index[0] = itk::Math::Round<float>(p[0]);
+    index[1] = itk::Math::Round<float>(p[1]);
     linePoints.push_back(index);
     }
 
