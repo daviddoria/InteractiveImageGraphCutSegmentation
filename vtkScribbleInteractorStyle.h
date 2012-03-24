@@ -51,6 +51,9 @@ public:
   std::vector<itk::Index<2> > GetForegroundSelection();
   std::vector<itk::Index<2> > GetBackgroundSelection();
 
+  void SetForegroundSelection(const std::vector<itk::Index<2> >&);
+  void SetBackgroundSelection(const std::vector<itk::Index<2> >&);
+  
   /** Empty both the foreground and background selection */
   void ClearSelections();
 
@@ -60,8 +63,11 @@ public:
   /** Empty the background selection */
   void ClearBackgroundSelections();
 
-  // Connect the tracer to the interactor, etc.
-  void InitializeTracer(vtkImageActor* imageActor);
+  /** Init */
+  void Init();
+  
+  /** Connect the tracer to the interactor, etc. */
+  void InitializeTracer(vtkImageActor* const imageActor);
 
 private:
   void Refresh();
@@ -90,8 +96,5 @@ private:
   vtkSmartPointer<vtkActor> ForegroundSelectionActor;
 
 };
-
-// Helpers
-std::vector<itk::Index<2> > PolyDataToPixelList(vtkPolyData* const polydata);
 
 #endif

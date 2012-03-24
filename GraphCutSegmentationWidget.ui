@@ -242,7 +242,7 @@
      <x>0</x>
      <y>0</y>
      <width>900</width>
-     <height>21</height>
+     <height>28</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -250,7 +250,6 @@
      <string>File</string>
     </property>
     <addaction name="actionOpenImage"/>
-    <addaction name="actionSaveSegmentation"/>
     <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
@@ -268,12 +267,15 @@
     <addaction name="actionClearBackgroundSelection"/>
     <addaction name="actionSaveForegroundSelection"/>
     <addaction name="actionSaveBackgroundSelection"/>
+    <addaction name="actionLoadForeground"/>
+    <addaction name="actionLoadBackground"/>
    </widget>
    <widget class="QMenu" name="menuExport">
     <property name="title">
      <string>Export</string>
     </property>
     <addaction name="actionExportSegmentedImage"/>
+    <addaction name="actionExportSegmentMask"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
@@ -350,6 +352,21 @@
   <action name="actionExportSegmentedImage">
    <property name="text">
     <string>Segmented Image</string>
+   </property>
+  </action>
+  <action name="actionExportSegmentMask">
+   <property name="text">
+    <string>Segment Mask</string>
+   </property>
+  </action>
+  <action name="actionLoadForeground">
+   <property name="text">
+    <string>Load Foreground</string>
+   </property>
+  </action>
+  <action name="actionLoadBackground">
+   <property name="text">
+    <string>Load Background</string>
    </property>
   </action>
  </widget>

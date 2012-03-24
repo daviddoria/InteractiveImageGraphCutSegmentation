@@ -54,11 +54,10 @@ public:
   // Several initializations are done here
   void SetImage(ImageType* const image);
 
+  ImageType* GetImage();
+
   // Create and cut the graph (The main driver function)
   void PerformSegmentation();
-
-  // Get the masked output image
-  ImageType::Pointer GetMaskedOutput();
 
   // Return a list of the selected (via scribbling) pixels
   std::vector<itk::Index<2> > GetSources();
@@ -72,7 +71,7 @@ public:
   void SetSinks(const std::vector<itk::Index<2> >& sinks);
 
   // Get the output of the segmentation
-  MaskImageType::Pointer GetSegmentMask();
+  MaskImageType* GetSegmentMask();
 
   // Set the weight between the regional and boundary terms
   void SetLambda(const float);

@@ -1,5 +1,11 @@
 #include "Helpers.h"
 
+// VTK
+#include <vtkPoints.h>
+#include <vtkPolyData.h>
+
+// ITK
+#include "itkBresenhamLine.h"
 #include "itkImageRegionIterator.h"
 #include "itkVectorMagnitudeImageFilter.h"
 #include "itkRescaleIntensityImageFilter.h"
@@ -228,6 +234,100 @@ void InvertBinaryImage(UnsignedCharScalarImageType::Pointer image, UnsignedCharS
  
     ++imageIterator;
     }
+}
+
+
+// This is a specialization that ensures that the number of pixels per component also matches.
+template<>
+void DeepCopy<itk::VectorImage<float, 2> >(const itk::VectorImage<float, 2>* const input, itk::VectorImage<float, 2>* const output)
+{
+  //std::cout << "DeepCopy<FloatVectorImageType>()" << std::endl;
+  bool changed = false;
+  if(input->GetNumberOfComponentsPerPixel() != output->GetNumberOfComponentsPerPixel())
+    {
+    output->SetNumberOfComponentsPerPixel(input->GetNumberOfComponentsPerPixel());
+    //std::cout << "Set output NumberOfComponentsPerPixel to " << input->GetNumberOfComponentsPerPixel() << std::endl;
+    changed = true;
+    }
+
+  if(input->GetLargestPossibleRegion() != output->GetLargestPossibleRegion())
+    {
+    output->SetRegions(input->GetLargestPossibleRegion());
+    changed = true;
+    }
+  if(changed)
+    {
+    output->Allocate();
+    }
+
+  DeepCopyInRegion<itk::VectorImage<float, 2> >(input, input->GetLargestPossibleRegion(), output);
+}
+
+std::vector<itk::Index<2> > GetNonZeroPixels(const MaskImageType* const image)
+{
+  std::vector<itk::Index<2> > pixels;
+  itk::ImageRegionConstIterator<MaskImageType> imageIterator(image, image->GetLargestPossibleRegion());
+
+  while(!imageIterator.IsAtEnd())
+    {
+    if(imageIterator.Get()) // If the current pixel is in question
+      {
+      pixels.push_back(imageIterator.GetIndex());
+      }
+    ++imageIterator;
+    }
+  return pixels;
+}
+
+
+std::vector<itk::Index<2> > PolyDataToPixelList(vtkPolyData* polydata)
+{
+  // Convert vtkPoints to indices
+  std::vector<itk::Index<2> > linePoints;
+  for(vtkIdType i = 0; i < polydata->GetNumberOfPoints(); i++)
+    {
+    itk::Index<2> index;
+    double p[3];
+    polydata->GetPoint(i,p);
+    index[0] = round(p[0]);
+    index[1] = round(p[1]);
+    linePoints.push_back(index);
+    }
+
+  // Compute the indices between every pair of points
+  std::vector<itk::Index<2> > allIndices;
+  for(unsigned int linePointId = 1; linePointId < linePoints.size(); linePointId++)
+    {
+    itk::Index<2> index0 = linePoints[linePointId-1];
+    itk::Index<2> index1 = linePoints[linePointId];
+    // Currently need the distance between the points for Bresenham (pending patch in Gerrit)
+    itk::Point<float,2> point0;
+    itk::Point<float,2> point1;
+    for(unsigned int i = 0; i < 2; i++)
+      {
+      point0[i] = index0[i];
+      point1[i] = index1[i];
+      }
+    float distance = point0.EuclideanDistanceTo(point1);
+    itk::BresenhamLine<2> line;
+    std::vector<itk::Offset<2> > offsets = line.BuildLine(point1-point0, distance);
+    for(unsigned int i = 0; i < offsets.size(); i++)
+      {
+      allIndices.push_back(index0 + offsets[i]);
+      }
+    }
+
+  return allIndices;
+}
+
+void PixelListToPoints(const std::vector<itk::Index<2> >& pixels, vtkPoints* const points)
+{
+  typedef std::vector<itk::Index<2> > PixelContainer;
+
+  for(PixelContainer::const_iterator iter = pixels.begin(); iter != pixels.end(); ++iter)
+  {
+    points->InsertNextPoint((*iter)[0], (*iter)[1], 0);
+  }
 }
 
 } // end namespace

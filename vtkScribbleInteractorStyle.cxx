@@ -17,6 +17,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "vtkScribbleInteractorStyle.h"
 
+// Custom
+#include "Helpers.h"
+
+// VTK
 #include <vtkActor.h>
 #include <vtkAppendPolyData.h>
 #include <vtkCallbackCommand.h>
@@ -31,7 +35,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <vtkRendererCollection.h>
 #include <vtkRenderWindow.h>
 #include <vtkRenderWindowInteractor.h>
+#include <vtkVertexGlyphFilter.h>
 
+// ITK
 #include <itkImageRegionIterator.h>
 #include <itkBresenhamLine.h>
 
@@ -67,6 +73,45 @@ vtkScribbleInteractorStyle::vtkScribbleInteractorStyle()
 
   // Defaults
   this->SelectionType = FOREGROUND;
+}
+
+void vtkScribbleInteractorStyle::SetForegroundSelection(const std::vector<itk::Index<2> >& pixels)
+{
+  this->ForegroundSelection = pixels;
+  vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+  Helpers::PixelListToPoints(pixels, points);
+
+  vtkSmartPointer<vtkPolyData> polydata = vtkSmartPointer<vtkPolyData>::New();
+  polydata->SetPoints(points);
+  
+  vtkSmartPointer<vtkVertexGlyphFilter> vertexGlyphFilter =
+    vtkSmartPointer<vtkVertexGlyphFilter>::New();
+  vertexGlyphFilter->AddInputData(polydata);
+  vertexGlyphFilter->Update();
+  
+  ForegroundSelectionPolyData->DeepCopy(vertexGlyphFilter->GetOutput());
+  ForegroundSelectionMapper->Modified();
+  this->Refresh();
+}
+
+void vtkScribbleInteractorStyle::SetBackgroundSelection(const std::vector<itk::Index<2> >& pixels)
+{
+  this->BackgroundSelection = pixels;
+
+  vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+  Helpers::PixelListToPoints(pixels, points);
+
+  vtkSmartPointer<vtkPolyData> polydata = vtkSmartPointer<vtkPolyData>::New();
+  polydata->SetPoints(points);
+
+  vtkSmartPointer<vtkVertexGlyphFilter> vertexGlyphFilter =
+    vtkSmartPointer<vtkVertexGlyphFilter>::New();
+  vertexGlyphFilter->AddInputData(polydata);
+  vertexGlyphFilter->Update();
+
+  BackgroundSelectionPolyData->DeepCopy(vertexGlyphFilter->GetOutput());
+  BackgroundSelectionMapper->Modified();
+  this->Refresh();
 }
 
 std::vector<itk::Index<2> > vtkScribbleInteractorStyle::GetForegroundSelection()
@@ -106,9 +151,18 @@ void vtkScribbleInteractorStyle::SetInteractionModeToBackground()
   this->SelectionType = BACKGROUND;
 }
 
+void vtkScribbleInteractorStyle::Init()
+{
+  std::cout << "Initialized renderer " << this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer() << std::endl;
+  
+  this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(BackgroundSelectionActor);
+  this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(ForegroundSelectionActor);
+}
+
 void vtkScribbleInteractorStyle::CatchWidgetEvent(vtkObject* caller, long unsigned int eventId, void* callData)
 {
   // Get the path from the tracer and append it to the appropriate selection
+  std::cout << "Using renderer " << this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer() << std::endl;
 
   this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(BackgroundSelectionActor);
   this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(ForegroundSelectionActor);
@@ -127,7 +181,7 @@ void vtkScribbleInteractorStyle::CatchWidgetEvent(vtkObject* caller, long unsign
     vtkSmartPointer<vtkAppendPolyData>::New();
   appendFilter->AddInputData(path);
 
-  std::vector<itk::Index<2> > newPoints = PolyDataToPixelList(path);
+  std::vector<itk::Index<2> > newPoints = Helpers::PolyDataToPixelList(path);
   //std::cout << newPoints.size() << " new points." << std::endl;
 
   // If we are in foreground mode, add the current selection to the foreground. Else, add it to the background.
@@ -168,7 +222,7 @@ void vtkScribbleInteractorStyle::CatchWidgetEvent(vtkObject* caller, long unsign
 
 void vtkScribbleInteractorStyle::Refresh()
 {
-  this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->Render();
+  //this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->Render();
   this->Interactor->GetRenderWindow()->Render();
 }
 
@@ -218,44 +272,4 @@ void vtkScribbleInteractorStyle::ClearBackgroundSelections()
   this->BackgroundSelection.clear();
 
   this->Refresh();
-}
-
-std::vector<itk::Index<2> > PolyDataToPixelList(vtkPolyData* polydata)
-{
-  // Convert vtkPoints to indices
-  std::vector<itk::Index<2> > linePoints;
-  for(vtkIdType i = 0; i < polydata->GetNumberOfPoints(); i++)
-    {
-    itk::Index<2> index;
-    double p[3];
-    polydata->GetPoint(i,p);
-    index[0] = round(p[0]);
-    index[1] = round(p[1]);
-    linePoints.push_back(index);
-    }
-
-  // Compute the indices between every pair of points
-  std::vector<itk::Index<2> > allIndices;
-  for(unsigned int linePointId = 1; linePointId < linePoints.size(); linePointId++)
-    {
-    itk::Index<2> index0 = linePoints[linePointId-1];
-    itk::Index<2> index1 = linePoints[linePointId];
-    // Currently need the distance between the points for Bresenham (pending patch in Gerrit)
-    itk::Point<float,2> point0;
-    itk::Point<float,2> point1;
-    for(unsigned int i = 0; i < 2; i++)
-      {
-      point0[i] = index0[i];
-      point1[i] = index1[i];
-      }
-    float distance = point0.EuclideanDistanceTo(point1);
-    itk::BresenhamLine<2> line;
-    std::vector<itk::Offset<2> > offsets = line.BuildLine(point1-point0, distance);
-    for(unsigned int i = 0; i < offsets.size(); i++)
-      {
-      allIndices.push_back(index0 + offsets[i]);
-      }
-    }
-
-  return allIndices;
 }

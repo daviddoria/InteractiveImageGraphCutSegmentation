@@ -119,6 +119,7 @@ void GraphCutSegmentationWidget::SharedConstructor()
   // Setup left interactor style
   this->GraphCutStyle = vtkSmartPointer<vtkScribbleInteractorStyle>::New();
   this->qvtkWidgetLeft->GetInteractor()->SetInteractorStyle(this->GraphCutStyle);
+  this->GraphCutStyle->Init();
 
   // Without this, the flipping does not work until we interact with the image
   this->GraphCutStyle->SetCurrentRenderer(this->LeftRenderer);
@@ -174,47 +175,21 @@ void GraphCutSegmentationWidget::on_actionFlipImageHorizontally_triggered()
   SetupCameras();
 }
 
-void GraphCutSegmentationWidget::on_actionSaveSegmentation_triggered()
+void GraphCutSegmentationWidget::on_actionExportSegmentMask_triggered()
 {
-  // Ask the user for a filename to save the segment mask image to
-
   QString fileName = QFileDialog::getSaveFileName(this,
-    "Save Segment Mask Image", ".", "Image Files (*.png *.mha)");
-/*
-  // Convert the image from a 1D vector image to an unsigned char image
-  typedef itk::CastImageFilter< GrayscaleImageType, itk::Image<itk::CovariantVector<unsigned char, 1>, 2 > > CastFilterType;
-  CastFilterType::Pointer castFilter = CastFilterType::New();
-  castFilter->SetInput(this->GraphCut->GetSegmentMask());
+    "Save Segment Mask Image", "segment_mask.png", "Image Files (*.png *.mha)");
 
-  typedef itk::NthElementImageAdaptor< itk::Image<itk:: CovariantVector<unsigned char, 1>, 2 >,
-    unsigned char> ImageAdaptorType;
-
-  ImageAdaptorType::Pointer adaptor = ImageAdaptorType::New();
-  adaptor->SelectNthElement(0);
-  adaptor->SetImage(castFilter->GetOutput());
-*/
-/*
-  // Write the file (object is white)
-  //typedef  itk::ImageFileWriter< ImageAdaptorType > WriterType;
+  if(fileName.isEmpty())
+  {
+    return;
+  }
+  
   typedef  itk::ImageFileWriter< MaskImageType > WriterType;
   WriterType::Pointer writer = WriterType::New();
   writer->SetFileName(fileName.toStdString());
-  //writer->SetInput(adaptor);
   writer->SetInput(this->GraphCut.GetSegmentMask());
   writer->Update();
-  */
-
-  // Write the inverted file (object is black)
-  MaskImageType::Pointer inverted = MaskImageType::New();
-  Helpers::InvertBinaryImage(this->GraphCut.GetSegmentMask(), inverted);
-  
-  //typedef  itk::ImageFileWriter< ImageAdaptorType > WriterType;
-  typedef  itk::ImageFileWriter< MaskImageType > WriterType;
-  WriterType::Pointer writer = WriterType::New();
-  writer->SetFileName(fileName.toStdString());
-  writer->SetInput(inverted);
-  writer->Update();
-
 }
 
 void GraphCutSegmentationWidget::on_actionOpenImage_triggered()
@@ -285,7 +260,12 @@ void GraphCutSegmentationWidget::slot_SegmentationComplete()
   // Convert the image into a VTK image for display
   vtkSmartPointer<vtkImageData> VTKImage =
     vtkSmartPointer<vtkImageData>::New();
-  Helpers::ITKImagetoVTKImage(this->GraphCut.GetMaskedOutput(), VTKImage);
+    
+  //Helpers::ITKImagetoVTKImage(this->GraphCut.GetMaskedOutput(), VTKImage);
+
+  ImageType::Pointer maskedImage = ImageType::New();
+  Helpers::MaskImage(this->GraphCut.GetImage(), this->GraphCut.GetSegmentMask(), maskedImage.GetPointer());
+  Helpers::ITKImagetoVTKImage(maskedImage, VTKImage);
 
   vtkSmartPointer<vtkImageData> VTKMaskedImage =
     vtkSmartPointer<vtkImageData>::New();
@@ -351,12 +331,19 @@ void GraphCutSegmentationWidget::on_actionClearBackgroundSelection_activated()
 
 void GraphCutSegmentationWidget::on_actionSaveForegroundSelection_activated()
 {
-  QString directoryName = QFileDialog::getExistingDirectory(this,
-     "Open Directory", QDir::homePath(), QFileDialog::ShowDirsOnly);
+//   QString directoryName = QFileDialog::getExistingDirectory(this,
+//      "Open Directory", QDir::homePath(), QFileDialog::ShowDirsOnly);
+// 
+//   std::string foregroundFilename = QDir(directoryName).absoluteFilePath("foreground.png").toStdString();
 
-  std::string foregroundFilename = QDir(directoryName).absoluteFilePath("foreground.png").toStdString();
+  QString fileName = QFileDialog::getSaveFileName(this,
+    "Save Segment Mask Image", ".", "Image Files (*.png)");
 
-  std::cout << "Writing to " << foregroundFilename << std::endl;
+  if(fileName.isEmpty())
+  {
+    return;
+  }
+  std::cout << "Writing to " << fileName.toStdString() << std::endl;
 
   UnsignedCharScalarImageType::Pointer foregroundImage = UnsignedCharScalarImageType::New();
   foregroundImage->SetRegions(this->ImageRegion);
@@ -365,7 +352,7 @@ void GraphCutSegmentationWidget::on_actionSaveForegroundSelection_activated()
 
   typedef  itk::ImageFileWriter< UnsignedCharScalarImageType  > WriterType;
   WriterType::Pointer writer = WriterType::New();
-  writer->SetFileName(foregroundFilename);
+  writer->SetFileName(fileName.toStdString());
   writer->SetInput(foregroundImage);
   writer->Update();
 }
@@ -373,12 +360,20 @@ void GraphCutSegmentationWidget::on_actionSaveForegroundSelection_activated()
 
 void GraphCutSegmentationWidget::on_actionSaveBackgroundSelection_activated()
 {
-  QString directoryName = QFileDialog::getExistingDirectory(this,
-     "Open Directory", QDir::homePath(), QFileDialog::ShowDirsOnly);
+//   QString directoryName = QFileDialog::getExistingDirectory(this,
+//      "Open Directory", QDir::homePath(), QFileDialog::ShowDirsOnly);
+// 
+//   std::string backgroundFilename = QDir(directoryName).absoluteFilePath("background.png").toStdString();
 
-  std::string backgroundFilename = QDir(directoryName).absoluteFilePath("background.png").toStdString();
+  QString fileName = QFileDialog::getSaveFileName(this,
+    "Save Segment Mask Image", ".", "Image Files (*.png)");
 
-  std::cout << "Writing to " << backgroundFilename << std::endl;
+  if(fileName.isEmpty())
+  {
+    return;
+  }
+  
+  std::cout << "Writing to " << fileName.toStdString() << std::endl;
 
   UnsignedCharScalarImageType::Pointer foregroundImage = UnsignedCharScalarImageType::New();
   foregroundImage->SetRegions(this->ImageRegion);
@@ -393,7 +388,7 @@ void GraphCutSegmentationWidget::on_actionSaveBackgroundSelection_activated()
   backgroundImage->Allocate();
   Helpers::IndicesToBinaryImage(this->GraphCutStyle->GetBackgroundSelection(), backgroundImage);
 
-  writer->SetFileName(backgroundFilename);
+  writer->SetFileName(fileName.toStdString());
   writer->SetInput(backgroundImage);
   writer->Update();
 }
@@ -427,48 +422,6 @@ void GraphCutSegmentationWidget::on_btnCut_clicked()
   this->ProgressDialog->exec();
 
 }
-
-#if 0
-void InnerWidget::actionFlip_Image_triggered()
-{
-  this->CameraUp[1] *= -1;
-  this->LeftRenderer->GetActiveCamera()->SetViewUp(this->CameraUp);
-  this->RightRenderer->GetActiveCamera()->SetViewUp(this->CameraUp);
-  this->Refresh();
-}
-#endif
-
-#if 0
-void InnerWidget::actionSave_Segmentation_triggered()
-{
-  // Ask the user for a filename to save the segment mask image to
-
-  QString fileName = QFileDialog::getSaveFileName(this,
-    tr("Save Segment Mask Image"), "/home/doriad", tr("Image Files (*.png *.bmp)"));
-/*
-  // Convert the image from a 1D vector image to an unsigned char image
-  typedef itk::CastImageFilter< GrayscaleImageType, itk::Image<itk::CovariantVector<unsigned char, 1>, 2 > > CastFilterType;
-  CastFilterType::Pointer castFilter = CastFilterType::New();
-  castFilter->SetInput(this->GraphCut->GetSegmentMask());
-
-  typedef itk::NthElementImageAdaptor< itk::Image<itk:: CovariantVector<unsigned char, 1>, 2 >,
-    unsigned char> ImageAdaptorType;
-
-  ImageAdaptorType::Pointer adaptor = ImageAdaptorType::New();
-  adaptor->SelectNthElement(0);
-  adaptor->SetImage(castFilter->GetOutput());
-*/
-  // Write the file
-  //typedef  itk::ImageFileWriter< ImageAdaptorType > WriterType;
-  typedef  itk::ImageFileWriter< MaskImageType > WriterType;
-  WriterType::Pointer writer = WriterType::New();
-  writer->SetFileName(fileName.toStdString());
-  //writer->SetInput(adaptor);
-  writer->SetInput(this->GraphCut->GetSegmentMask());
-  writer->Update();
-
-}
-#endif
 
 void GraphCutSegmentationWidget::OpenFile(const std::string& fileName)
 {
@@ -517,4 +470,76 @@ void GraphCutSegmentationWidget::Refresh()
   this->qvtkWidgetLeft->GetRenderWindow()->Render();
   this->qvtkWidgetRight->GetInteractor()->Render();
   this->qvtkWidgetLeft->GetInteractor()->Render();
+}
+
+void GraphCutSegmentationWidget::on_actionExportSegmentedImage_triggered()
+{
+  QString fileName = QFileDialog::getSaveFileName(this,
+    "Save Segmented Image", "segmented.mha", "Image Files (*.mha)");
+
+  if(fileName.isEmpty())
+  {
+    return;
+  }
+  
+  ImageType::Pointer maskedImage = ImageType::New();
+  Helpers::MaskImage(this->GraphCut.GetImage(), this->GraphCut.GetSegmentMask(), maskedImage.GetPointer());
+
+  //typedef  itk::ImageFileWriter< ImageAdaptorType > WriterType;
+  typedef  itk::ImageFileWriter<ImageType> WriterType;
+  WriterType::Pointer writer = WriterType::New();
+  writer->SetFileName(fileName.toStdString());
+  writer->SetInput(maskedImage);
+  writer->Update();
+
+}
+
+
+void GraphCutSegmentationWidget::on_actionLoadForeground_triggered()
+{
+  QString filename = QFileDialog::getOpenFileName(this,
+     "Open Image", ".", "PNG Files (*.png)");
+
+  if(filename.isEmpty())
+    {
+    return;
+    }
+
+  typedef  itk::ImageFileReader< MaskImageType  > ReaderType;
+  ReaderType::Pointer reader = ReaderType::New();
+  reader->SetFileName(filename.toStdString());
+  reader->Update();
+
+  std::vector<itk::Index<2> > pixels = Helpers::GetNonZeroPixels(reader->GetOutput());
+
+  //this->GraphCut.SetSources(pixels);
+  this->GraphCutStyle->SetForegroundSelection(pixels);
+
+  Refresh();
+  
+  std::cout << "Set " << pixels.size() << " new foreground pixels." << std::endl;
+}
+
+void GraphCutSegmentationWidget::on_actionLoadBackground_triggered()
+{
+  QString filename = QFileDialog::getOpenFileName(this,
+     "Open Image", ".", "PNG Files (*.png)");
+
+  if(filename.isEmpty())
+    {
+    return;
+    }
+
+  typedef  itk::ImageFileReader< MaskImageType  > ReaderType;
+  ReaderType::Pointer reader = ReaderType::New();
+  reader->SetFileName(filename.toStdString());
+  reader->Update();
+
+  std::vector<itk::Index<2> > pixels = Helpers::GetNonZeroPixels(reader->GetOutput());
+
+  //this->GraphCut.SetSinks(pixels);
+  this->GraphCutStyle->SetBackgroundSelection(pixels);
+
+  Refresh();
+  std::cout << "Set " << pixels.size() << " new background pixels." << std::endl;
 }

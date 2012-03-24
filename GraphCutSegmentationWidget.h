@@ -47,11 +47,17 @@ public slots:
   void on_actionFlipImageVertically_triggered();
   void on_actionFlipImageHorizontally_triggered();
 
+  // Export menu
+  void on_actionExportSegmentedImage_triggered();
+  void on_actionExportSegmentMask_triggered();
+
   // File menu
   void on_actionExit_triggered();
   void on_actionOpenImage_triggered();
-  void on_actionSaveSegmentation_triggered();
 
+  void on_actionLoadForeground_triggered();
+  void on_actionLoadBackground_triggered();
+  
   /** Buttons, radio buttons, and sliders*/
   void on_actionSaveForegroundSelection_activated();
   void on_actionSaveBackgroundSelection_activated();

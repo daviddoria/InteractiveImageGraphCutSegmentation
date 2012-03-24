@@ -17,6 +17,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "ImageGraphCut.h"
 
+#include "Helpers.h"
+
 // ITK
 #include "itkImageRegionIterator.h"
 #include "itkShapedNeighborhoodIterator.h"
@@ -39,7 +41,8 @@ void ImageGraphCut::SetImage(ImageType* const image)
 {
 
   this->Image = ImageType::New();
-  this->Image->Graft(image);
+  //this->Image->Graft(image);
+  Helpers::DeepCopy(image, this->Image.GetPointer());
 
   // Setup the output (mask) image
   //this->SegmentMask = GrayscaleImageType::New();
@@ -68,29 +71,6 @@ void ImageGraphCut::SetImage(ImageType* const image)
 
   this->RGBWeight = 0.5; // This value is never used - it is set from the slider
 
-}
-
-ImageType::Pointer ImageGraphCut::GetMaskedOutput()
-{
-  // Note: If you get a compiler error on this function complaining about NumericTraits in MaskImageFilter,
-  // you will need a newer version of ITK. The ability to mask a VectorImage is new.
-  
-  // Mask the input image with the mask
-  //typedef itk::MaskImageFilter< TImage, GrayscaleImageType > MaskFilterType;
-  typedef itk::MaskImageFilter< ImageType, MaskImageType > MaskFilterType;
-  MaskFilterType::Pointer maskFilter = MaskFilterType::New();
-  
-  typedef itk::VariableLengthVector<double> VariableVectorType;
-  VariableVectorType variableLengthVector;
-  variableLengthVector.SetSize(this->Image->GetNumberOfComponentsPerPixel());
-  variableLengthVector.Fill(0);
-  maskFilter->SetOutsideValue(variableLengthVector);
-  
-  maskFilter->SetInput1(this->Image);
-  maskFilter->SetInput2(this->SegmentMask);
-  maskFilter->Update();
-
-  return maskFilter->GetOutput();
 }
 
 void ImageGraphCut::CutGraph()
@@ -136,7 +116,8 @@ void ImageGraphCut::PerformSegmentation()
   // Ensure at least one pixel has been specified for both the foreground and background
   if((this->Sources.size() <= 0) || (this->Sinks.size() <= 0))
     {
-    std::cout << "At least one source (foreground) pixel and one sink (background) pixel must be specified!" << std::endl;
+    std::cerr << "At least one source (foreground) pixel and one sink (background) pixel must be specified!" << std::endl;
+    std::cerr << "Currently there are " << this->Sources.size() << " and " << this->Sinks.size() << " sinks." << std::endl;
     return;
     }
 
@@ -465,7 +446,7 @@ void ImageGraphCut::SetNumberOfHistogramBins(int bins)
   this->NumberOfHistogramBins = bins;
 }
 
-MaskImageType::Pointer ImageGraphCut::GetSegmentMask()
+MaskImageType* ImageGraphCut::GetSegmentMask()
 {
   return this->SegmentMask;
 }
@@ -534,4 +515,9 @@ void ImageGraphCut::SetSources(const std::vector<itk::Index<2> >& sources)
 void ImageGraphCut::SetSinks(const std::vector<itk::Index<2> >& sinks)
 {
   this->Sinks = sinks;
+}
+
+ImageType* ImageGraphCut::GetImage()
+{
+  return this->Image;
 }
