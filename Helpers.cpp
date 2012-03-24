@@ -1,5 +1,8 @@
 #include "Helpers.h"
 
+// STL
+#include <cmath>
+
 // VTK
 #include <vtkPoints.h>
 #include <vtkPolyData.h>
