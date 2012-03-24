@@ -33,7 +33,7 @@ vtkScribbleInteractorStyle.cxx
 ImageGraphCut.cxx
 ${GraphCutSegmentationMOCSrcs} ${GraphCutSegmentationUISrcs})
 TARGET_LINK_LIBRARIES(InteractiveImageGraphCutSegmentation ${VTK_LIBRARIES}
-QVTK ${QT_LIBRARIES} QtXml MaxFlow
+QVTK ${QT_LIBRARIES} MaxFlow
 ${ITK_LIBRARIES}
 )
 #
