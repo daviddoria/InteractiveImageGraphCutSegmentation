@@ -6,7 +6,9 @@
 
 // All images are stored internally as float pixels
 typedef itk::VectorImage<float,2> ImageType;
-typedef typename ImageType::PixelType PixelType;
+typedef ImageType::PixelType PixelType;
+//typedef typename ImageType::PixelType PixelType;
+
 //typedef itk::VariableLengthVector<float> PixelType;
 
 typedef itk::Image<float, 2> FloatScalarImageType;
