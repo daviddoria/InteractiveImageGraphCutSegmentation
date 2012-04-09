@@ -1,45 +1,47 @@
 #include "ImageGraphCut.h"
+#include "Helpers.h"
 
 #include "itkImage.h"
-#include "itkCovariantVector.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 #include "itkImageRegionConstIteratorWithIndex.h"
-
-std::vector<itk::Index<2> > GetMaskedPixels(UnsignedCharScalarImageType::Pointer image);
+#include "itkVectorImage.h"
 
 int main(int argc, char*argv[])
 {
+  typedef itk::VectorImage<float, 2> ImageType;
+  
   if(argc != 5)
     {
     std::cerr << "Required: image foregroundMask backgroundMask output" << std::endl;
     return EXIT_FAILURE;
     }
-    
+
   std::string imageFilename = argv[1];
-  std::string foregroundMaskFilename = argv[2];
-  std::string backgroundMaskFilename = argv[3];
+  std::string foregroundFilename = argv[2]; // This image should have white pixels indicating foreground pixels and be black elsewhere.
+  std::string backgroundFilename = argv[3]; // This image should have white pixels indicating background pixels and be black elsewhere.
   std::string outputFilename = argv[4]; // Foreground/background segment mask
 
-  typedef itk::ImageFileReader<RGBDIImageType> ReaderType;
+  typedef itk::ImageFileReader<ImageType> ReaderType;
   ReaderType::Pointer reader = ReaderType::New();
   reader->SetFileName(imageFilename);
   reader->Update();
 
   typedef itk::ImageFileReader<UnsignedCharScalarImageType> UnsignedCharReaderType;
-  UnsignedCharReaderType::Pointer foregroundMaskReader = UnsignedCharReaderType::New();
-  foregroundMaskReader->SetFileName(foregroundMaskFilename);
-  foregroundMaskReader->Update();
+  UnsignedCharReaderType::Pointer foregroundReader = UnsignedCharReaderType::New();
+  foregroundReader->SetFileName(foregroundFilename);
+  foregroundReader->Update();
 
-  UnsignedCharReaderType::Pointer backgroundMaskReader = UnsignedCharReaderType::New();
-  backgroundMaskReader->SetFileName(backgroundMaskFilename);
-  backgroundMaskReader->Update();
+  UnsignedCharReaderType::Pointer backgroundReader = UnsignedCharReaderType::New();
+  backgroundReader->SetFileName(backgroundFilename);
+  backgroundReader->Update();
   
-  ImageGraphCut<RGBDIImageType> GraphCut(reader->GetOutput());
+  ImageGraphCut GraphCut;
+  GraphCut.SetImage(reader->GetOutput());
   GraphCut.SetNumberOfHistogramBins(20);
   GraphCut.SetLambda(.01);
-  std::vector<itk::Index<2> > foregroundPixels = GetMaskedPixels(foregroundMaskReader->GetOutput());
-  std::vector<itk::Index<2> > backgroundPixels = GetMaskedPixels(backgroundMaskReader->GetOutput());
+  std::vector<itk::Index<2> > foregroundPixels = Helpers::GetNonZeroPixels(foregroundReader->GetOutput());
+  std::vector<itk::Index<2> > backgroundPixels = Helpers::GetNonZeroPixels(backgroundReader->GetOutput());
   GraphCut.SetSources(foregroundPixels);
   GraphCut.SetSinks(backgroundPixels);
   GraphCut.PerformSegmentation();
@@ -51,24 +53,4 @@ int main(int argc, char*argv[])
   writer->SetFileName(outputFilename);
   writer->SetInput(result);
   writer->Update();
-}
-
-
-std::vector<itk::Index<2> > GetMaskedPixels(UnsignedCharScalarImageType::Pointer image)
-{
-  std::vector<itk::Index<2> > pixels;
-  
-  itk::ImageRegionConstIteratorWithIndex<UnsignedCharScalarImageType> imageIterator(image,image->GetLargestPossibleRegion());
-
-  while(!imageIterator.IsAtEnd())
-    {
-    if(imageIterator.Get() != 0)
-      {
-      pixels.push_back(imageIterator.GetIndex());
-      }
-
-    ++imageIterator;
-    }
-
-  return pixels;
 }

@@ -36,11 +36,8 @@ TARGET_LINK_LIBRARIES(InteractiveImageGraphCutSegmentation ${VTK_LIBRARIES}
 QVTK ${QT_LIBRARIES} MaxFlow
 ${ITK_LIBRARIES}
 )
-#
-# ADD_EXECUTABLE(NonInteractive NonInteractive.cpp
-# graph.cpp maxflow.cpp
-# Helpers.cpp
-# )
-# TARGET_LINK_LIBRARIES(NonInteractive vtkHybrid vtkWidgets
-# ITKCommon ITKIO ITKStatistics
-# )
+
+ADD_EXECUTABLE(NonInteractive NonInteractive.cpp ImageGraphCut.cxx
+Helpers.cpp
+)
+TARGET_LINK_LIBRARIES(NonInteractive MaxFlow ${VTK_LIBRARIES} ${ITK_LIBRARIES} )

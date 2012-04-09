@@ -19,9 +19,6 @@ namespace Helpers
 
 void MaskImage(vtkSmartPointer<vtkImageData> VTKImage, vtkSmartPointer<vtkImageData> VTKSegmentMask, vtkSmartPointer<vtkImageData> VTKMaskedImage);
 
-
-std::vector<itk::Index<2> > GetNonZeroPixels(const MaskImageType* const image);
-
 std::vector<itk::Index<2> > PolyDataToPixelList(vtkPolyData* const polydata);
 
 void PixelListToPoints(const std::vector<itk::Index<2> >& pixels, vtkPoints* const points);
@@ -60,6 +57,8 @@ void DeepCopy<itk::VectorImage<float, 2> >(const itk::VectorImage<float, 2>* con
 template<typename TImage>
 void DeepCopyInRegion(const TImage* const input, const itk::ImageRegion<2>& region, TImage* const output);
 
+template <typename TImage>
+std::vector<itk::Index<2> > GetNonZeroPixels(const TImage* const image);
 
 }
 

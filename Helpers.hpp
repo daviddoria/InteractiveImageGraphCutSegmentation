@@ -121,4 +121,24 @@ void DeepCopyInRegion(const TImage* input, const itk::ImageRegion<2>& region, TI
     }
 }
 
+template <typename TImage>
+std::vector<itk::Index<2> > GetNonZeroPixels(const TImage* const image)
+{
+  std::vector<itk::Index<2> > pixels;
+
+  typename itk::ImageRegionConstIteratorWithIndex<TImage> imageIterator(image, image->GetLargestPossibleRegion());
+
+  while(!imageIterator.IsAtEnd())
+    {
+    if(imageIterator.Get() != 0)
+      {
+      pixels.push_back(imageIterator.GetIndex());
+      }
+
+    ++imageIterator;
+    }
+
+  return pixels;
+}
+
 } // end namespace

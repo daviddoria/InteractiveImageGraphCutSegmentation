@@ -264,25 +264,9 @@ void DeepCopy<itk::VectorImage<float, 2> >(const itk::VectorImage<float, 2>* con
     output->Allocate();
     }
 
-  DeepCopyInRegion<itk::VectorImage<float, 2> >(input, input->GetLargestPossibleRegion(), output);
+  //DeepCopyInRegion<itk::VectorImage<float, 2> >(input, input->GetLargestPossibleRegion(), output);
+  DeepCopyInRegion(input, input->GetLargestPossibleRegion(), output);
 }
-
-std::vector<itk::Index<2> > GetNonZeroPixels(const MaskImageType* const image)
-{
-  std::vector<itk::Index<2> > pixels;
-  itk::ImageRegionConstIterator<MaskImageType> imageIterator(image, image->GetLargestPossibleRegion());
-
-  while(!imageIterator.IsAtEnd())
-    {
-    if(imageIterator.Get()) // If the current pixel is in question
-      {
-      pixels.push_back(imageIterator.GetIndex());
-      }
-    ++imageIterator;
-    }
-  return pixels;
-}
-
 
 std::vector<itk::Index<2> > PolyDataToPixelList(vtkPolyData* polydata)
 {
@@ -335,5 +319,7 @@ void PixelListToPoints(const std::vector<itk::Index<2> >& pixels, vtkPoints* con
     points->InsertNextPoint((*iter)[0], (*iter)[1], 0);
   }
 }
+
+
 
 } // end namespace
