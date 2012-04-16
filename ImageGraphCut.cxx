@@ -17,7 +17,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "ImageGraphCut.h"
 
-#include "Helpers.h"
+// Submodules
+#include "Helpers/Helpers.h"
+#include "ITKHelpers/ITKHelpers.h"
 
 // ITK
 #include "itkImageRegionIterator.h"
@@ -42,11 +44,11 @@ void ImageGraphCut::SetImage(ImageType* const image)
 
   this->Image = ImageType::New();
   //this->Image->Graft(image);
-  Helpers::DeepCopy(image, this->Image.GetPointer());
+  ITKHelpers::DeepCopy(image, this->Image.GetPointer());
 
   // Setup the output (mask) image
   //this->SegmentMask = GrayscaleImageType::New();
-  this->SegmentMask = MaskImageType::New();
+  this->SegmentMask = Mask::New();
   this->SegmentMask->SetRegions(this->Image->GetLargestPossibleRegion());
   this->SegmentMask->Allocate();
 
@@ -83,14 +85,15 @@ void ImageGraphCut::CutGraph()
   // Setup the values of the output (mask) image
   //GrayscalePixelType sinkPixel;
   //sinkPixel[0] = 0;
-  MaskImageType::PixelType sinkPixel = 0;
+  Mask::PixelType sinkPixel = 0;
 
   //GrayscalePixelType sourcePixel;
   //sourcePixel[0] = 255;
-  MaskImageType::PixelType sourcePixel = 255;
+  Mask::PixelType sourcePixel = 255;
 
   // Iterate over the node image, querying the Kolmorogov graph object for the association of each pixel and storing them as the output mask
-  itk::ImageRegionConstIterator<NodeImageType> nodeImageIterator(this->NodeImage, this->NodeImage->GetLargestPossibleRegion());
+  itk::ImageRegionConstIterator<NodeImageType> nodeImageIterator(this->NodeImage,
+                                                                 this->NodeImage->GetLargestPossibleRegion());
   nodeImageIterator.GoToBegin();
 
   while(!nodeImageIterator.IsAtEnd())
@@ -132,11 +135,13 @@ void ImageGraphCut::PerformSegmentation()
     }
 
   // Blank the output image
-  //itk::ImageRegionIterator<GrayscaleImageType> segmentMaskImageIterator(this->SegmentMask, this->SegmentMask->GetLargestPossibleRegion());
-  itk::ImageRegionIterator<MaskImageType> segmentMaskImageIterator(this->SegmentMask, this->SegmentMask->GetLargestPossibleRegion());
+  //itk::ImageRegionIterator<GrayscaleImageType> segmentMaskImageIterator(this->SegmentMask,
+  //                                             this->SegmentMask->GetLargestPossibleRegion());
+  itk::ImageRegionIterator<Mask> segmentMaskImageIterator(this->SegmentMask,
+                                                                   this->SegmentMask->GetLargestPossibleRegion());
   segmentMaskImageIterator.GoToBegin();
 
-  MaskImageType::PixelType empty = 0;
+  Mask::PixelType empty = 0;
   //empty[0] = 0;
 
   while(!segmentMaskImageIterator.IsAtEnd())
@@ -446,7 +451,7 @@ void ImageGraphCut::SetNumberOfHistogramBins(int bins)
   this->NumberOfHistogramBins = bins;
 }
 
-MaskImageType* ImageGraphCut::GetSegmentMask()
+Mask* ImageGraphCut::GetSegmentMask()
 {
   return this->SegmentMask;
 }

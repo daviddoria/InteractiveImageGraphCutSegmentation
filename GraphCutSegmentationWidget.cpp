@@ -17,7 +17,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "GraphCutSegmentationWidget.h"
 
-#include "Helpers.h"
+// Submodules
+#include "Helpers/Helpers.h"
+#include "ITKVTKHelpers/ITKVTKHelpers.h"
+#include "ITKHelpers/ITKHelpers.h"
+#include "VTKHelpers/VTKHelpers.h"
+#include "Mask/Mask.h"
 
 // ITK
 #include <itkCastImageFilter.h>
@@ -186,7 +191,7 @@ void GraphCutSegmentationWidget::on_actionExportSegmentMask_triggered()
     return;
   }
   
-  typedef  itk::ImageFileWriter< MaskImageType > WriterType;
+  typedef  itk::ImageFileWriter<Mask> WriterType;
   WriterType::Pointer writer = WriterType::New();
   writer->SetFileName(fileName.toStdString());
   writer->SetInput(this->GraphCut.GetSegmentMask());
@@ -256,21 +261,17 @@ void GraphCutSegmentationWidget::slot_SegmentationComplete()
   // Convert the segmentation mask to a binary VTK image
   vtkSmartPointer<vtkImageData> VTKSegmentMask =
     vtkSmartPointer<vtkImageData>::New();
-  Helpers::ITKScalarImagetoVTKImage(this->GraphCut.GetSegmentMask(), VTKSegmentMask);
+  ITKVTKHelpers::ITKScalarImageToScaledVTKImage(this->GraphCut.GetSegmentMask(), VTKSegmentMask);
 
   // Convert the image into a VTK image for display
   vtkSmartPointer<vtkImageData> VTKImage =
     vtkSmartPointer<vtkImageData>::New();
-    
-  //Helpers::ITKImagetoVTKImage(this->GraphCut.GetMaskedOutput(), VTKImage);
 
-  ImageType::Pointer maskedImage = ImageType::New();
-  Helpers::MaskImage(this->GraphCut.GetImage(), this->GraphCut.GetSegmentMask(), maskedImage.GetPointer());
-  Helpers::ITKImagetoVTKImage(maskedImage, VTKImage);
+  ITKVTKHelpers::ITKImageToVTKRGBImage(this->GraphCut.GetImage(), VTKImage);
 
   vtkSmartPointer<vtkImageData> VTKMaskedImage =
     vtkSmartPointer<vtkImageData>::New();
-  Helpers::MaskImage(VTKImage, VTKSegmentMask, VTKMaskedImage);
+  VTKHelpers::MaskImage(VTKImage, VTKSegmentMask, VTKMaskedImage);
 
   // Remove the old output, set the new output and refresh everything
   //this->ResultActor = vtkSmartPointer<vtkImageActor>::New();
@@ -349,7 +350,7 @@ void GraphCutSegmentationWidget::on_actionSaveForegroundSelection_activated()
   UnsignedCharScalarImageType::Pointer foregroundImage = UnsignedCharScalarImageType::New();
   foregroundImage->SetRegions(this->ImageRegion);
   foregroundImage->Allocate();
-  Helpers::IndicesToBinaryImage(this->GraphCutStyle->GetForegroundSelection(), foregroundImage);
+  ITKHelpers::IndicesToBinaryImage(this->GraphCutStyle->GetForegroundSelection(), foregroundImage);
 
   typedef  itk::ImageFileWriter< UnsignedCharScalarImageType  > WriterType;
   WriterType::Pointer writer = WriterType::New();
@@ -379,7 +380,7 @@ void GraphCutSegmentationWidget::on_actionSaveBackgroundSelection_activated()
   UnsignedCharScalarImageType::Pointer foregroundImage = UnsignedCharScalarImageType::New();
   foregroundImage->SetRegions(this->ImageRegion);
   foregroundImage->Allocate();
-  Helpers::IndicesToBinaryImage(this->GraphCutStyle->GetForegroundSelection(), foregroundImage);
+  ITKHelpers::IndicesToBinaryImage(this->GraphCutStyle->GetForegroundSelection(), foregroundImage);
 
   typedef  itk::ImageFileWriter< UnsignedCharScalarImageType  > WriterType;
   WriterType::Pointer writer = WriterType::New();
@@ -387,7 +388,7 @@ void GraphCutSegmentationWidget::on_actionSaveBackgroundSelection_activated()
   UnsignedCharScalarImageType::Pointer backgroundImage = UnsignedCharScalarImageType::New();
   backgroundImage->SetRegions(this->ImageRegion);
   backgroundImage->Allocate();
-  Helpers::IndicesToBinaryImage(this->GraphCutStyle->GetBackgroundSelection(), backgroundImage);
+  ITKHelpers::IndicesToBinaryImage(this->GraphCutStyle->GetBackgroundSelection(), backgroundImage);
 
   writer->SetFileName(fileName.toStdString());
   writer->SetInput(backgroundImage);
@@ -440,7 +441,7 @@ void GraphCutSegmentationWidget::OpenFile(const std::string& fileName)
 
   // Convert the ITK image to a VTK image and display it
   vtkSmartPointer<vtkImageData> VTKImage = vtkSmartPointer<vtkImageData>::New();
-  Helpers::ITKImagetoVTKImage(reader->GetOutput(), VTKImage);
+  ITKVTKHelpers::ITKImageToVTKRGBImage(reader->GetOutput(), VTKImage);
 
   this->LeftRenderer->RemoveAllViewProps();
 
@@ -484,7 +485,8 @@ void GraphCutSegmentationWidget::on_actionExportSegmentedImage_triggered()
   }
   
   ImageType::Pointer maskedImage = ImageType::New();
-  Helpers::MaskImage(this->GraphCut.GetImage(), this->GraphCut.GetSegmentMask(), maskedImage.GetPointer());
+  ITKHelpers::DeepCopy(this->GraphCut.GetImage(), maskedImage.GetPointer());
+  this->GraphCut.GetSegmentMask()->ApplyToImage(maskedImage.GetPointer());
 
   //typedef  itk::ImageFileWriter< ImageAdaptorType > WriterType;
   typedef  itk::ImageFileWriter<ImageType> WriterType;
@@ -504,12 +506,12 @@ void GraphCutSegmentationWidget::on_actionLoadForeground_triggered()
     return;
     }
 
-  typedef  itk::ImageFileReader< MaskImageType  > ReaderType;
+  typedef  itk::ImageFileReader<Mask> ReaderType;
   ReaderType::Pointer reader = ReaderType::New();
   reader->SetFileName(filename.toStdString());
   reader->Update();
 
-  std::vector<itk::Index<2> > pixels = Helpers::GetNonZeroPixels(reader->GetOutput());
+  std::vector<itk::Index<2> > pixels = ITKHelpers::GetNonZeroPixels(reader->GetOutput());
 
   //this->GraphCut.SetSources(pixels);
   this->GraphCutStyle->SetForegroundSelection(pixels);
@@ -529,12 +531,12 @@ void GraphCutSegmentationWidget::on_actionLoadBackground_triggered()
     return;
     }
 
-  typedef  itk::ImageFileReader< MaskImageType  > ReaderType;
+  typedef  itk::ImageFileReader<Mask> ReaderType;
   ReaderType::Pointer reader = ReaderType::New();
   reader->SetFileName(filename.toStdString());
   reader->Update();
 
-  std::vector<itk::Index<2> > pixels = Helpers::GetNonZeroPixels(reader->GetOutput());
+  std::vector<itk::Index<2> > pixels = ITKHelpers::GetNonZeroPixels(reader->GetOutput());
 
   //this->GraphCut.SetSinks(pixels);
   this->GraphCutStyle->SetBackgroundSelection(pixels);

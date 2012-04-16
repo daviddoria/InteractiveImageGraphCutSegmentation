@@ -22,6 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <vtkSmartPointer.h>
 class vtkPolyData;
 
+#include "Mask/Mask.h"
+
 // ITK
 #include "itkImage.h"
 #include "itkSampleToHistogramFilter.h"
@@ -71,7 +73,7 @@ public:
   void SetSinks(const std::vector<itk::Index<2> >& sinks);
 
   // Get the output of the segmentation
-  MaskImageType* GetSegmentMask();
+  Mask* GetSegmentMask();
 
   // Set the weight between the regional and boundary terms
   void SetLambda(const float);
@@ -88,7 +90,7 @@ protected:
   GraphType* Graph;
 
   /** The output segmentation */
-  MaskImageType::Pointer SegmentMask;
+  Mask::Pointer SegmentMask;
 
   /** User specified foreground points */
   std::vector<itk::Index<2> > Sources;

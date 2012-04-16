@@ -17,8 +17,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "vtkScribbleInteractorStyle.h"
 
-// Custom
-#include "Helpers.h"
+// Submodules
+#include "Helpers/Helpers.h"
+#include "ITKVTKHelpers/ITKVTKHelpers.h"
+#include "ITKHelpers/ITKHelpers.h"
 
 // VTK
 #include <vtkActor.h>
@@ -79,7 +81,7 @@ void vtkScribbleInteractorStyle::SetForegroundSelection(const std::vector<itk::I
 {
   this->ForegroundSelection = pixels;
   vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
-  Helpers::PixelListToPoints(pixels, points);
+  ITKVTKHelpers::PixelListToPoints(pixels, points);
 
   vtkSmartPointer<vtkPolyData> polydata = vtkSmartPointer<vtkPolyData>::New();
   polydata->SetPoints(points);
@@ -99,7 +101,7 @@ void vtkScribbleInteractorStyle::SetBackgroundSelection(const std::vector<itk::I
   this->BackgroundSelection = pixels;
 
   vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
-  Helpers::PixelListToPoints(pixels, points);
+  ITKVTKHelpers::PixelListToPoints(pixels, points);
 
   vtkSmartPointer<vtkPolyData> polydata = vtkSmartPointer<vtkPolyData>::New();
   polydata->SetPoints(points);
@@ -183,7 +185,7 @@ void vtkScribbleInteractorStyle::CatchWidgetEvent(vtkObject* caller, long unsign
     vtkSmartPointer<vtkAppendPolyData>::New();
   appendFilter->AddInputData(path);
 
-  std::vector<itk::Index<2> > newPoints = Helpers::PolyDataToPixelList(path);
+  std::vector<itk::Index<2> > newPoints = ITKVTKHelpers::PolyDataToPixelList(path);
   //std::cout << newPoints.size() << " new points." << std::endl;
 
   // If we are in foreground mode, add the current selection to the foreground. Else, add it to the background.

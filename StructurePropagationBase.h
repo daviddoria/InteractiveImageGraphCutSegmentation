@@ -63,7 +63,7 @@ public:
   void SetSinks(std::vector<itk::Index<2> > sinks);
 
   // Get the output of the segmentation
-  MaskImageType::Pointer GetSegmentMask();
+  Mask::Pointer GetSegmentMask();
 
   // Set the weight between the regional and boundary terms
   void SetLambda(float);
@@ -86,7 +86,7 @@ protected:
   GraphType* Graph;
 
   // The output segmentation
-  MaskImageType::Pointer SegmentMask;
+  Mask* SegmentMask;
 
   // User specified foreground points
   std::vector<itk::Index<2> > Sources;
