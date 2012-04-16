@@ -144,6 +144,7 @@ void GraphCutSegmentationWidget::SharedConstructor()
   actionSaveSegmentation->setIcon(saveIcon);
   this->toolBar->addAction(actionSaveSegmentation);
 }
+
 void GraphCutSegmentationWidget::on_actionExit_triggered()
 {
   exit(0);
@@ -491,9 +492,7 @@ void GraphCutSegmentationWidget::on_actionExportSegmentedImage_triggered()
   writer->SetFileName(fileName.toStdString());
   writer->SetInput(maskedImage);
   writer->Update();
-
 }
-
 
 void GraphCutSegmentationWidget::on_actionLoadForeground_triggered()
 {

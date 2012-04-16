@@ -153,7 +153,8 @@ void vtkScribbleInteractorStyle::SetInteractionModeToBackground()
 
 void vtkScribbleInteractorStyle::Init()
 {
-  std::cout << "Initialized renderer " << this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer() << std::endl;
+  std::cout << "Initialized renderer " << this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer()
+            << std::endl;
   
   this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(BackgroundSelectionActor);
   this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(ForegroundSelectionActor);
@@ -162,7 +163,8 @@ void vtkScribbleInteractorStyle::Init()
 void vtkScribbleInteractorStyle::CatchWidgetEvent(vtkObject* caller, long unsigned int eventId, void* callData)
 {
   // Get the path from the tracer and append it to the appropriate selection
-  std::cout << "Using renderer " << this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer() << std::endl;
+  std::cout << "Using renderer " << this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer()
+            << std::endl;
 
   this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(BackgroundSelectionActor);
   this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(ForegroundSelectionActor);
