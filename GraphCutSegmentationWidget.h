@@ -40,6 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // VTK
 class vtkImageSlice;
 class vtkImageSliceMapper;
+class vtkImageStack;
 
 class GraphCutSegmentationWidget : public QMainWindow, private Ui::GraphCutSegmentationWidget
 {
@@ -139,16 +140,30 @@ protected:
 
   bool AlreadySegmented;
 
-  /** Data, mapper, and actor for the selections */
-  vtkSmartPointer<vtkPolyData> ForegroundSelectionPolyData;
-  vtkSmartPointer<vtkPolyData> BackgroundSelectionPolyData;
-  vtkPolyData* SelectionPolyData;
+  vtkSmartPointer<vtkImageStack> LeftStack;
+  vtkSmartPointer<vtkImageStack> RightStack;
 
-  vtkSmartPointer<vtkPolyDataMapper> BackgroundSelectionMapper;
-  vtkSmartPointer<vtkPolyDataMapper> ForegroundSelectionMapper;
+  /** Both panes - This data can be used by both the Left and Right SourceSinkImageSliceMapper */
+  vtkSmartPointer<vtkImageData> SourceSinkImageData;
 
-  vtkSmartPointer<vtkActor> BackgroundSelectionActor;
-  vtkSmartPointer<vtkActor> ForegroundSelectionActor;
+  vtkSmartPointer<vtkImageSliceMapper> LeftSourceSinkImageSliceMapper;
+  vtkSmartPointer<vtkImageSlice> LeftSourceSinkImageSlice;
+
+  vtkSmartPointer<vtkImageSliceMapper> RightSourceSinkImageSliceMapper;
+  vtkSmartPointer<vtkImageSlice> RightSourceSinkImageSlice;
+
+  void SetupLeftPane();
+  void SetupRightPane();
+
+  /** This function setups up things that are shared by both panes. */
+  void SetupBothPanes();
+
+  typedef std::vector<itk::Index<2> > VectorOfPixels;
+  VectorOfPixels Sources;
+  VectorOfPixels Sinks;
+  VectorOfPixels* SelectedPixelSet;
+  
+  void UpdateSelections();
 };
 
 #endif

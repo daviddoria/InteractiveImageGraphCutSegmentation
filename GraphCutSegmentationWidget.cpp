@@ -37,8 +37,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <vtkAppendPolyData.h>
 #include <vtkCamera.h>
 #include <vtkImageData.h>
+#include <vtkImageProperty.h>
 #include <vtkImageSlice.h>
 #include <vtkImageSliceMapper.h>
+#include <vtkImageStack.h>
 #include <vtkInteractorStyleImage.h>
 #include <vtkPolyData.h>
 #include <vtkPolyDataMapper.h>
@@ -71,26 +73,17 @@ void GraphCutSegmentationWidget::SharedConstructor()
   // Setup the GUI and connect all of the signals and slots
   setupUi(this);
 
-  // Setup the selections
-  this->ForegroundSelectionPolyData = vtkSmartPointer<vtkPolyData>::New();
-  this->BackgroundSelectionPolyData = vtkSmartPointer<vtkPolyData>::New();
-  this->SelectionPolyData = this->ForegroundSelectionPolyData;
-
-  this->BackgroundSelectionMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-  this->ForegroundSelectionMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-
-  this->BackgroundSelectionActor = vtkSmartPointer<vtkActor>::New();
-  this->ForegroundSelectionActor = vtkSmartPointer<vtkActor>::New();
-
-  this->BackgroundSelectionMapper->SetInputData(this->BackgroundSelectionPolyData);
-  this->ForegroundSelectionMapper->SetInputData(this->ForegroundSelectionPolyData);
-
-  this->BackgroundSelectionActor->SetMapper(this->BackgroundSelectionMapper);
-  this->ForegroundSelectionActor->SetMapper(this->ForegroundSelectionMapper);
+  SelectedPixelSet = &Sources;
+  
+  SourceSinkImageData = vtkSmartPointer<vtkImageData>::New();
+  SetupBothPanes(); // This must be called before SetupLeftPane() and SetupRightPane()
+  SetupLeftPane();
+  SetupRightPane();
 
   // This will track if we should reset the camera or not
   this->AlreadySegmented = false;
-  
+
+  // Setup the progress bar
   this->ProgressDialog = new QProgressDialog();
   this->ProgressDialog->setMinimum(0);
   this->ProgressDialog->setMaximum(0);
@@ -118,59 +111,8 @@ void GraphCutSegmentationWidget::SharedConstructor()
   CameraBottomToTop[1] = 1;
   CameraBottomToTop[2] = 0;
 
-  // Instantiations
-  this->OriginalImageSlice = vtkSmartPointer<vtkImageSlice>::New();
-  this->OriginalImageSlice->VisibilityOff();
-  this->ResultSlice = vtkSmartPointer<vtkImageSlice>::New();
-
-  this->OriginalImageSliceMapper = vtkSmartPointer<vtkImageSliceMapper>::New();
-  this->ResultSliceMapper = vtkSmartPointer<vtkImageSliceMapper>::New();
-
-  this->OriginalImageSlice->SetMapper(this->OriginalImageSliceMapper);
-  this->ResultSlice->SetMapper(this->ResultSliceMapper);
-
-  // Add renderers - we flip the image by changing the camera view up because of the conflicting
-  // conventions used by ITK and VTK
-  this->LeftRenderer = vtkSmartPointer<vtkRenderer>::New();
-  this->LeftRenderer->GradientBackgroundOn();
-  this->LeftRenderer->SetBackground(this->BackgroundColor);
-  this->LeftRenderer->SetBackground2(1,1,1);
-  //this->LeftRenderer->GetActiveCamera()->SetViewUp(this->CameraUp);
-  
-  this->qvtkWidgetLeft->GetRenderWindow()->AddRenderer(this->LeftRenderer);
-
-  this->RightRenderer = vtkSmartPointer<vtkRenderer>::New();
-  this->RightRenderer->GradientBackgroundOn();
-  this->RightRenderer->SetBackground(this->BackgroundColor);
-  this->RightRenderer->SetBackground2(1,1,1);
-  //this->RightRenderer->GetActiveCamera()->SetViewUp(this->CameraUp);
-  this->qvtkWidgetRight->GetRenderWindow()->AddRenderer(this->RightRenderer);
-
-  this->ResultSlice->VisibilityOff();
-  this->RightRenderer->AddViewProp(this->ResultSlice);
-  
-  // Setup right interactor style
-  vtkSmartPointer<vtkInteractorStyleImage> interactorStyleImage =
-    vtkSmartPointer<vtkInteractorStyleImage>::New();
-  this->qvtkWidgetRight->GetInteractor()->SetInteractorStyle(interactorStyleImage);
-
-  // Setup left interactor style
-  this->GraphCutStyle = vtkSmartPointer<vtkInteractorStyleScribble>::New();
-  this->qvtkWidgetLeft->GetInteractor()->SetInteractorStyle(this->GraphCutStyle);
-  this->GraphCutStyle->AddObserver(this->GraphCutStyle->ScribbleEvent,
-                                   this, &GraphCutSegmentationWidget::ScribbleEventHandler);
-  this->GraphCutStyle->SetCurrentRenderer(this->LeftRenderer);
-  this->GraphCutStyle->InitializeTracer(this->OriginalImageSlice);
-
-  // Without this, the flipping does not work until we interact with the image
-  this->GraphCutStyle->SetCurrentRenderer(this->LeftRenderer);
-
-  this->RightInteractorStyle = vtkSmartPointer<vtkInteractorStyleImage>::New();
-  this->qvtkWidgetRight->GetInteractor()->SetInteractorStyle(this->RightInteractorStyle);
-  this->RightInteractorStyle->SetCurrentRenderer(this->RightRenderer);
-
   SetupCameras();
-  
+
   // Default GUI settings
   this->radForeground->setChecked(true);
 
@@ -185,6 +127,101 @@ void GraphCutSegmentationWidget::SharedConstructor()
   actionSaveSegmentation->setIcon(saveIcon);
   this->toolBar->addAction(actionSaveSegmentation);
 }
+
+
+void GraphCutSegmentationWidget::SetupBothPanes()
+{
+  this->OriginalImageSlice = vtkSmartPointer<vtkImageSlice>::New();
+  this->OriginalImageSlice->VisibilityOff();
+  this->OriginalImageSliceMapper = vtkSmartPointer<vtkImageSliceMapper>::New();
+  this->OriginalImageSlice->SetMapper(this->OriginalImageSliceMapper);
+  
+  this->ResultSlice = vtkSmartPointer<vtkImageSlice>::New();
+  this->ResultSlice ->VisibilityOff();
+  this->ResultSliceMapper = vtkSmartPointer<vtkImageSliceMapper>::New();
+  this->ResultSlice->SetMapper(this->ResultSliceMapper);
+}
+
+void GraphCutSegmentationWidget::SetupLeftPane()
+{
+  // Add renderers - we flip the image by changing the camera view up because of the conflicting
+  // conventions used by ITK and VTK
+  this->LeftRenderer = vtkSmartPointer<vtkRenderer>::New();
+  this->LeftRenderer->GradientBackgroundOn();
+  this->LeftRenderer->SetBackground(this->BackgroundColor);
+  this->LeftRenderer->SetBackground2(1,1,1);
+  //this->LeftRenderer->GetActiveCamera()->SetViewUp(this->CameraUp);
+
+  this->qvtkWidgetLeft->GetRenderWindow()->AddRenderer(this->LeftRenderer);
+
+  this->LeftStack = vtkSmartPointer<vtkImageStack>::New();
+  this->LeftSourceSinkImageSliceMapper = vtkSmartPointer<vtkImageSliceMapper>::New();
+  this->LeftSourceSinkImageSlice = vtkSmartPointer<vtkImageSlice>::New();
+  this->LeftSourceSinkImageSlice->VisibilityOff();
+  
+  this->LeftSourceSinkImageSliceMapper->SetInputData(this->SourceSinkImageData);
+
+  // Make the pixels sharp instead of blurry when zoomed
+  this->LeftSourceSinkImageSlice->GetProperty()->SetInterpolationTypeToNearest();
+  this->LeftSourceSinkImageSlice->SetMapper(this->LeftSourceSinkImageSliceMapper);
+
+  this->LeftStack->AddImage(this->OriginalImageSlice);
+  this->LeftStack->AddImage(this->LeftSourceSinkImageSlice);
+  
+  this->OriginalImageSlice->GetProperty()->SetLayerNumber(0); // 0 = Bottom of the stack
+  this->LeftSourceSinkImageSlice->GetProperty()->SetLayerNumber(1); // The source/sink image should be displayed on top of the result image.
+  this->LeftStack->SetActiveLayer(1);
+  
+  this->LeftRenderer->AddViewProp(this->LeftStack);
+
+  // Setup left interactor style
+  this->GraphCutStyle = vtkSmartPointer<vtkInteractorStyleScribble>::New();
+  this->qvtkWidgetLeft->GetInteractor()->SetInteractorStyle(this->GraphCutStyle);
+  this->GraphCutStyle->AddObserver(this->GraphCutStyle->ScribbleEvent,
+                                   this, &GraphCutSegmentationWidget::ScribbleEventHandler);
+  this->GraphCutStyle->SetCurrentRenderer(this->LeftRenderer);
+  this->GraphCutStyle->InitializeTracer(this->LeftSourceSinkImageSlice); // We want to trace in the source/sink display layer
+
+  // Without this, the flipping does not work until we interact with the image
+  this->GraphCutStyle->SetCurrentRenderer(this->LeftRenderer);
+}
+
+void GraphCutSegmentationWidget::SetupRightPane()
+{
+  this->RightRenderer = vtkSmartPointer<vtkRenderer>::New();
+  this->RightRenderer->GradientBackgroundOn();
+  this->RightRenderer->SetBackground(this->BackgroundColor);
+  this->RightRenderer->SetBackground2(1,1,1);
+  //this->RightRenderer->GetActiveCamera()->SetViewUp(this->CameraUp);
+  this->qvtkWidgetRight->GetRenderWindow()->AddRenderer(this->RightRenderer);
+
+  // Setup right interactor style
+  vtkSmartPointer<vtkInteractorStyleImage> interactorStyleImage =
+    vtkSmartPointer<vtkInteractorStyleImage>::New();
+  this->qvtkWidgetRight->GetInteractor()->SetInteractorStyle(interactorStyleImage);
+
+  this->RightInteractorStyle = vtkSmartPointer<vtkInteractorStyleImage>::New();
+  this->qvtkWidgetRight->GetInteractor()->SetInteractorStyle(this->RightInteractorStyle);
+  this->RightInteractorStyle->SetCurrentRenderer(this->RightRenderer);
+
+  this->RightStack = vtkSmartPointer<vtkImageStack>::New();
+  this->RightSourceSinkImageSliceMapper = vtkSmartPointer<vtkImageSliceMapper>::New();
+  this->RightSourceSinkImageSlice = vtkSmartPointer<vtkImageSlice>::New();
+  this->RightSourceSinkImageSlice->VisibilityOff();
+  
+  this->RightSourceSinkImageSliceMapper->SetInputData(this->SourceSinkImageData);
+
+  // Make the pixels sharp instead of blurry when zoomed
+  this->RightSourceSinkImageSlice->GetProperty()->SetInterpolationTypeToNearest();
+  this->RightSourceSinkImageSlice->SetMapper(this->RightSourceSinkImageSliceMapper);
+
+  this->RightStack->AddImage(this->ResultSlice);
+  this->RightStack->AddImage(this->RightSourceSinkImageSlice);
+
+  this->RightRenderer->AddViewProp(this->RightStack);
+
+}
+
 
 void GraphCutSegmentationWidget::on_actionExit_triggered()
 {
@@ -313,6 +350,9 @@ void GraphCutSegmentationWidget::slot_SegmentationComplete()
   //this->ResultActor = vtkSmartPointer<vtkImageActor>::New();
   this->ResultSliceMapper->SetInputData(VTKMaskedImage);
 
+  this->RightSourceSinkImageSlice->VisibilityOn();
+  this->ResultSlice->VisibilityOn();
+  
   if(!this->AlreadySegmented)
     {
     this->RightRenderer->ResetCamera();
@@ -353,24 +393,24 @@ void GraphCutSegmentationWidget::on_sldRGBWeight_valueChanged()
 
 void GraphCutSegmentationWidget::on_radForeground_clicked()
 {
-  this->SelectionPolyData = this->ForegroundSelectionPolyData;
+  this->SelectedPixelSet = &Sources;
   this->GraphCutStyle->SetColorToGreen();
 }
 
 void GraphCutSegmentationWidget::on_radBackground_clicked()
 {
-  this->SelectionPolyData = this->BackgroundSelectionPolyData;
+  this->SelectedPixelSet = &Sinks;
   this->GraphCutStyle->SetColorToRed();
 }
 
 void GraphCutSegmentationWidget::on_actionClearForegroundSelection_activated()
 {
-  this->ForegroundSelectionPolyData->Initialize();
+  this->Sources.clear();
 }
 
 void GraphCutSegmentationWidget::on_actionClearBackgroundSelection_activated()
 {
-  this->BackgroundSelectionPolyData->Initialize();
+  this->Sinks.clear();
 }
 
 void GraphCutSegmentationWidget::on_actionSaveForegroundSelection_activated()
@@ -392,8 +432,8 @@ void GraphCutSegmentationWidget::on_actionSaveForegroundSelection_activated()
   UnsignedCharScalarImageType::Pointer foregroundImage = UnsignedCharScalarImageType::New();
   foregroundImage->SetRegions(this->ImageRegion);
   foregroundImage->Allocate();
-  std::vector<itk::Index<2> > sources = ITKVTKHelpers::PolyDataToPixelList(this->ForegroundSelectionPolyData);
-  ITKHelpers::IndicesToBinaryImage(sources, foregroundImage);
+  
+  ITKHelpers::IndicesToBinaryImage(this->Sources, foregroundImage);
 
   typedef  itk::ImageFileWriter< UnsignedCharScalarImageType  > WriterType;
   WriterType::Pointer writer = WriterType::New();
@@ -420,20 +460,14 @@ void GraphCutSegmentationWidget::on_actionSaveBackgroundSelection_activated()
   
   std::cout << "Writing to " << fileName.toStdString() << std::endl;
 
-  UnsignedCharScalarImageType::Pointer foregroundImage = UnsignedCharScalarImageType::New();
-  foregroundImage->SetRegions(this->ImageRegion);
-  foregroundImage->Allocate();
-  std::vector<itk::Index<2> > sources = ITKVTKHelpers::PolyDataToPixelList(this->ForegroundSelectionPolyData);
-  ITKHelpers::IndicesToBinaryImage(sources, foregroundImage);
-
   typedef  itk::ImageFileWriter< UnsignedCharScalarImageType  > WriterType;
   WriterType::Pointer writer = WriterType::New();
 
   UnsignedCharScalarImageType::Pointer backgroundImage = UnsignedCharScalarImageType::New();
   backgroundImage->SetRegions(this->ImageRegion);
   backgroundImage->Allocate();
-  std::vector<itk::Index<2> > sinks = ITKVTKHelpers::PolyDataToPixelList(this->BackgroundSelectionPolyData);
-  ITKHelpers::IndicesToBinaryImage(sinks, backgroundImage);
+  
+  ITKHelpers::IndicesToBinaryImage(this->Sinks, backgroundImage);
 
   writer->SetFileName(fileName.toStdString());
   writer->SetInput(backgroundImage);
@@ -457,10 +491,8 @@ void GraphCutSegmentationWidget::on_btnCut_clicked()
   this->GraphCut.SetRGBWeight(sldRGBWeight->value() / 100.);
   this->GraphCut.SetLambda(ComputeLambda());
 
-  std::vector<itk::Index<2> > sources = ITKVTKHelpers::PolyDataToPixelList(this->ForegroundSelectionPolyData);
-  std::vector<itk::Index<2> > sinks = ITKVTKHelpers::PolyDataToPixelList(this->BackgroundSelectionPolyData);
-  this->GraphCut.SetSources(sources);
-  this->GraphCut.SetSinks(sinks);
+  this->GraphCut.SetSources(this->Sources);
+  this->GraphCut.SetSinks(this->Sinks);
 
   /////////////
   QFuture<void> future = QtConcurrent::run(this->GraphCut, &ImageGraphCut::PerformSegmentation);
@@ -476,8 +508,8 @@ void GraphCutSegmentationWidget::on_btnCut_clicked()
 void GraphCutSegmentationWidget::OpenFile(const std::string& fileName)
 {
   // Clear the scribbles
-  this->ForegroundSelectionPolyData->Initialize();
-  this->BackgroundSelectionPolyData->Initialize();
+  this->Sources.clear();
+  this->Sinks.clear();
 
   // Read file
   itk::ImageFileReader<ImageType>::Pointer reader = itk::ImageFileReader<ImageType>::New();
@@ -493,20 +525,26 @@ void GraphCutSegmentationWidget::OpenFile(const std::string& fileName)
   ITKVTKHelpers::ITKImageToVTKRGBImage(reader->GetOutput(), VTKImage);
 
   this->OriginalImageSliceMapper->SetInputData(VTKImage);
-  this->GraphCutStyle->InitializeTracer(this->OriginalImageSlice);
 
+  // Setup the scribble canvas
+  VTKHelpers::SetImageSizeToMatch(VTKImage, this->SourceSinkImageData);
+  this->SourceSinkImageData->AllocateScalars(VTK_UNSIGNED_CHAR, 4);
+  VTKHelpers::MakeImageTransparent(this->SourceSinkImageData);
+  
+  this->LeftSourceSinkImageSlice->VisibilityOn();
   this->OriginalImageSlice->VisibilityOn();
+  
   this->LeftRenderer->ResetCamera();
   this->Refresh();
 
   // Setup the scribble style
   if(this->radBackground->isChecked())
     {
-    this->SelectionPolyData = this->BackgroundSelectionPolyData;
+    this->SelectedPixelSet = &Sinks;
     }
   else
     {
-    this->SelectionPolyData = this->ForegroundSelectionPolyData;
+    this->SelectedPixelSet = &Sources;
     }
 
   this->AlreadySegmented = false;
@@ -515,8 +553,6 @@ void GraphCutSegmentationWidget::OpenFile(const std::string& fileName)
 
 void GraphCutSegmentationWidget::Refresh()
 {
-  //this->LeftRenderer->Render();
-  //this->RightRenderer->Render();
   this->qvtkWidgetRight->GetRenderWindow()->Render();
   this->qvtkWidgetLeft->GetRenderWindow()->Render();
   this->qvtkWidgetRight->GetInteractor()->Render();
@@ -594,15 +630,38 @@ void GraphCutSegmentationWidget::on_actionLoadBackground_triggered()
 
 void GraphCutSegmentationWidget::ScribbleEventHandler(vtkObject* caller, long unsigned int eventId, void* callData)
 {
-  std::cout << "ScribbleEventHandler()" << std::endl;
-  
-  vtkSmartPointer<vtkAppendPolyData> appendFilter = vtkSmartPointer<vtkAppendPolyData>::New();
-  appendFilter->AddInputData(this->GraphCutStyle->GetSelectionPolyData());
-  appendFilter->AddInputData(this->SelectionPolyData);
-  appendFilter->Update();
+  // Dilate the path and mark the path and the dilated pixels as part of the currently selected group
+  unsigned int dilateRadius = 2;
 
-  std::cout << "Before scribble there were " << this->SelectionPolyData->GetNumberOfPoints() << " points." << std::endl;
-  this->SelectionPolyData->ShallowCopy(appendFilter->GetOutput());
-  std::cout << "After scribble there were " << this->SelectionPolyData->GetNumberOfPoints() << " points." << std::endl;
-  std::cout << "After scribble there were " << this->SelectionPolyData->GetNumberOfCells() << " cells." << std::endl;
+  std::vector<itk::Index<2> > thinSelection = ITKVTKHelpers::PointsToPixelList(this->GraphCutStyle->GetSelectionPolyData()->GetPoints());
+
+  std::vector<itk::Index<2> > selection = ITKHelpers::DilatePixelList(thinSelection,
+                                                                   this->ImageRegion,
+                                                                   dilateRadius);
+
+  this->SelectedPixelSet->insert(this->SelectedPixelSet->end(), selection.begin(), selection.end());
+
+  UpdateSelections();
+}
+
+void GraphCutSegmentationWidget::UpdateSelections()
+{
+  // First, clear the image
+  VTKHelpers::MakeImageTransparent(this->SourceSinkImageData);
+
+  unsigned char green[3] = {0, 255, 0};
+  unsigned char red[3] = {255, 0, 0};
+
+  ITKVTKHelpers::SetPixels(this->SourceSinkImageData, this->Sources, green);
+  ITKVTKHelpers::SetPixels(this->SourceSinkImageData, this->Sinks, red);
+
+  this->SourceSinkImageData->Modified();
+
+  std::cout << this->Sources.size() << " sources." << std::endl;
+  std::cout << this->Sinks.size() << " sinks." << std::endl;
+
+  //this->LeftSourceSinkImageSliceMapper->Modified();
+  //this->RightSourceSinkImageSliceMapper->Modified();
+
+  this->Refresh();
 }
