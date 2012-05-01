@@ -17,6 +17,7 @@ add_subdirectory(ITKHelpers)
 add_subdirectory(VTKHelpers)
 add_subdirectory(ITKVTKHelpers)
 add_subdirectory(Mask)
+add_subdirectory(ScribbleInteractorStyle)
 
 FIND_PACKAGE(VTK REQUIRED)
 INCLUDE( ${USE_VTK_FILE} )
@@ -36,13 +37,13 @@ add_library(MaxFlow graph.cpp maxflow.cpp)
 
 ADD_EXECUTABLE(InteractiveImageGraphCutSegmentation
 InteractiveGraphCutSegmentation.cpp GraphCutSegmentationWidget.cpp
-vtkScribbleInteractorStyle.cxx
 ImageGraphCut.cxx
 ${GraphCutSegmentationMOCSrcs} ${GraphCutSegmentationUISrcs})
-TARGET_LINK_LIBRARIES(InteractiveImageGraphCutSegmentation ${VTK_LIBRARIES}
-QVTK ${QT_LIBRARIES} MaxFlow
-libHelpers libITKHelpers libVTKHelpers libITKVTKHelpers libMask
-${ITK_LIBRARIES}
+TARGET_LINK_LIBRARIES(InteractiveImageGraphCutSegmentation
+${VTK_LIBRARIES} ${ITK_LIBRARIES}
+QVTK ${QT_LIBRARIES}
+MaxFlow
+libHelpers libITKHelpers libVTKHelpers libITKVTKHelpers libMask libScribble
 )
 
 ADD_EXECUTABLE(NonInteractive NonInteractive.cpp ImageGraphCut.cxx)

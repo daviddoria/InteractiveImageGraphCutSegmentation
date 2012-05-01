@@ -32,7 +32,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QProgressDialog>
 
 // Custom
-#include "vtkScribbleInteractorStyle.h"
+#include "ImageGraphCut.h"
+
+// Submodules
+#include "ScribbleInteractorStyle/vtkInteractorStyleScribble.h"
+
+// VTK
+class vtkImageSlice;
+class vtkImageSliceMapper;
 
 class GraphCutSegmentationWidget : public QMainWindow, private Ui::GraphCutSegmentationWidget
 {
@@ -84,6 +91,8 @@ public slots:
 
 protected:
 
+  void ScribbleEventHandler(vtkObject* caller, long unsigned int eventId, void* callData);
+  
   /** A constructor that can be used by all other constructors. */
   void SharedConstructor();
 
@@ -91,15 +100,18 @@ protected:
   float ComputeLambda();
 
   /** Our scribble interactor style */
-  vtkSmartPointer<vtkScribbleInteractorStyle> GraphCutStyle;
+  vtkSmartPointer<vtkInteractorStyleScribble> GraphCutStyle;
 
   /** The interactor style for the resulting segmented image. */
   vtkSmartPointer<vtkInteractorStyleImage> RightInteractorStyle;
   
   /** The input and output image actors */
-  vtkSmartPointer<vtkImageActor> OriginalImageActor;
-  vtkSmartPointer<vtkImageActor> ResultActor;
+  vtkSmartPointer<vtkImageSlice> OriginalImageSlice;
+  vtkSmartPointer<vtkImageSlice> ResultSlice;
 
+  vtkSmartPointer<vtkImageSliceMapper> OriginalImageSliceMapper;
+  vtkSmartPointer<vtkImageSliceMapper> ResultSliceMapper;
+  
   /** The renderers */
   vtkSmartPointer<vtkRenderer> LeftRenderer;
   vtkSmartPointer<vtkRenderer> RightRenderer;
@@ -124,6 +136,19 @@ protected:
 
   QFutureWatcher<void> FutureWatcher;
   QProgressDialog* ProgressDialog;
+
+  bool AlreadySegmented;
+
+  /** Data, mapper, and actor for the selections */
+  vtkSmartPointer<vtkPolyData> ForegroundSelectionPolyData;
+  vtkSmartPointer<vtkPolyData> BackgroundSelectionPolyData;
+  vtkPolyData* SelectionPolyData;
+
+  vtkSmartPointer<vtkPolyDataMapper> BackgroundSelectionMapper;
+  vtkSmartPointer<vtkPolyDataMapper> ForegroundSelectionMapper;
+
+  vtkSmartPointer<vtkActor> BackgroundSelectionActor;
+  vtkSmartPointer<vtkActor> ForegroundSelectionActor;
 };
 
 #endif
