@@ -78,9 +78,6 @@ public:
   // Set the weight between the regional and boundary terms
   void SetLambda(const float);
 
-  // Set the weight of the RGB components of the pixels vs the rest of the components
-  void SetRGBWeight(const float);
-
   // Set the number of bins per dimension of the foreground and background histograms
   void SetNumberOfHistogramBins(const int);
 

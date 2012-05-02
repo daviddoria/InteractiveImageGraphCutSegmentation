@@ -58,6 +58,7 @@ public slots:
   // Export menu
   void on_actionExportSegmentedImage_triggered();
   void on_actionExportSegmentMask_triggered();
+  void on_actionExportScreenshotLeft_triggered();
 
   // File menu
   void on_actionExit_triggered();
@@ -69,14 +70,21 @@ public slots:
   /** Buttons, radio buttons, and sliders*/
   void on_actionSaveForegroundSelection_activated();
   void on_actionSaveBackgroundSelection_activated();
+  
   void on_actionClearBackgroundSelection_activated();
   void on_actionClearForegroundSelection_activated();
+  void on_actionClearAll_activated();
 
   void on_btnCut_clicked();
   void on_radForeground_clicked();
   void on_radBackground_clicked();
+
+  void on_btnHideStrokesLeft_clicked();
+  void on_btnShowStrokesLeft_clicked();
+  void on_btnHideStrokesRight_clicked();
+  void on_btnShowStrokesRight_clicked();
+  
   void sldHistogramBins_valueChanged();
-  void on_sldRGBWeight_valueChanged();
 
   void slot_SegmentationComplete();
 
@@ -164,6 +172,8 @@ protected:
   VectorOfPixels* SelectedPixelSet;
   
   void UpdateSelections();
+
+  void closeEvent(QCloseEvent *event);
 };
 
 #endif

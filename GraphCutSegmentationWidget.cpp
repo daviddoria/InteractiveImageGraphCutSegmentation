@@ -42,11 +42,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <vtkImageSliceMapper.h>
 #include <vtkImageStack.h>
 #include <vtkInteractorStyleImage.h>
+#include <vtkPNGWriter.h>
 #include <vtkPolyData.h>
 #include <vtkPolyDataMapper.h>
 #include <vtkRenderer.h>
 #include <vtkRenderWindow.h>
 #include <vtkSmartPointer.h>
+#include <vtkWindowToImageFilter.h>
 
 // Qt
 #include <QFileDialog>
@@ -73,6 +75,10 @@ void GraphCutSegmentationWidget::SharedConstructor()
   // Setup the GUI and connect all of the signals and slots
   setupUi(this);
 
+  this->BackgroundColor[0] = 0;
+  this->BackgroundColor[1] = 0;
+  this->BackgroundColor[2] = 1;
+  
   SelectedPixelSet = &Sources;
   
   SourceSinkImageData = vtkSmartPointer<vtkImageData>::New();
@@ -94,10 +100,6 @@ void GraphCutSegmentationWidget::SharedConstructor()
   connect( this->sldHistogramBins, SIGNAL( valueChanged(int) ), this, SLOT(sldHistogramBins_valueChanged()));
   connect( this->sldLambda, SIGNAL( valueChanged(int) ), this, SLOT(UpdateLambda()));
   connect( this->txtLambdaMax, SIGNAL( textEdited(QString) ), this, SLOT(UpdateLambda()));
-
-  this->BackgroundColor[0] = 0;
-  this->BackgroundColor[1] = 0;
-  this->BackgroundColor[2] = .5;
 
 //   this->CameraUp[0] = 0;
 //   this->CameraUp[1] = 1;
@@ -148,8 +150,9 @@ void GraphCutSegmentationWidget::SetupLeftPane()
   // conventions used by ITK and VTK
   this->LeftRenderer = vtkSmartPointer<vtkRenderer>::New();
   this->LeftRenderer->GradientBackgroundOn();
+
   this->LeftRenderer->SetBackground(this->BackgroundColor);
-  this->LeftRenderer->SetBackground2(1,1,1);
+  this->LeftRenderer->SetBackground2(1,1,1); // White
   //this->LeftRenderer->GetActiveCamera()->SetViewUp(this->CameraUp);
 
   this->qvtkWidgetLeft->GetRenderWindow()->AddRenderer(this->LeftRenderer);
@@ -191,7 +194,7 @@ void GraphCutSegmentationWidget::SetupRightPane()
   this->RightRenderer = vtkSmartPointer<vtkRenderer>::New();
   this->RightRenderer->GradientBackgroundOn();
   this->RightRenderer->SetBackground(this->BackgroundColor);
-  this->RightRenderer->SetBackground2(1,1,1);
+  this->RightRenderer->SetBackground2(1,1,1); // White
   //this->RightRenderer->GetActiveCamera()->SetViewUp(this->CameraUp);
   this->qvtkWidgetRight->GetRenderWindow()->AddRenderer(this->RightRenderer);
 
@@ -287,45 +290,6 @@ void GraphCutSegmentationWidget::on_actionOpenImage_triggered()
   OpenFile(filename.toStdString());
 }
 
-/*
- // Display segmented image with black background pixels
-void Form::StopProgressSlot()
-{
-  // When the ProgressThread emits the StopProgressSignal, we need to display the result of the segmentation
-
-  // Convert the masked image into a VTK image for display
-  vtkSmartPointer<vtkImageData> VTKSegmentMask =
-    vtkSmartPointer<vtkImageData>::New();
-  if(this->GraphCut->GetPixelDimensionality() == 1)
-    {
-    ITKImagetoVTKImage<GrayscaleImageType>(static_cast<ImageGraphCut<GrayscaleImageType>* >(this->GraphCut)->GetMaskedOutput(), VTKSegmentMask);
-    }
-  else if(this->GraphCut->GetPixelDimensionality() == 3)
-    {
-    ITKImagetoVTKImage<ColorImageType>(static_cast<ImageGraphCut<ColorImageType>* >(this->GraphCut)->GetMaskedOutput(), VTKSegmentMask);
-    }
-  else if(this->GraphCut->GetPixelDimensionality() == 5)
-    {
-    ITKImagetoVTKImage<RGBDIImageType>(static_cast<ImageGraphCut<RGBDIImageType>* >(this->GraphCut)->GetMaskedOutput(), VTKSegmentMask);
-    }
-  else
-    {
-    std::cerr << "This type of image (" << this->GraphCut->GetPixelDimensionality() << ") cannot be displayed!" << std::endl;
-    exit(-1);
-    }
-
-  // Remove the old output, set the new output and refresh everything
-  this->ResultActor = vtkSmartPointer<vtkImageActor>::New();
-  this->ResultActor->SetInput(VTKSegmentMask);
-  this->RightRenderer->RemoveAllViewProps();
-  this->RightRenderer->AddActor(ResultActor);
-  this->RightRenderer->ResetCamera();
-  this->Refresh();
-
-  this->progressBar->hide();
-}
-*/
-
 // Display segmented image with transparent background pixels
 void GraphCutSegmentationWidget::slot_SegmentationComplete()
 {
@@ -386,11 +350,6 @@ void GraphCutSegmentationWidget::sldHistogramBins_valueChanged()
   //this->lblHistogramBins->setText(QString::number(sldHistogramBins->value())); // This is taken care of by a signal/slot pair setup in QtDesigner
 }
 
-void GraphCutSegmentationWidget::on_sldRGBWeight_valueChanged()
-{
-  this->lblRGBWeight->setText(QString::number(sldRGBWeight->value() / 100.));
-}
-
 void GraphCutSegmentationWidget::on_radForeground_clicked()
 {
   this->SelectedPixelSet = &Sources;
@@ -403,14 +362,24 @@ void GraphCutSegmentationWidget::on_radBackground_clicked()
   this->GraphCutStyle->SetColorToRed();
 }
 
+void GraphCutSegmentationWidget::on_actionClearAll_activated()
+{
+  on_actionClearForegroundSelection_activated();
+  on_actionClearBackgroundSelection_activated();
+}
+
 void GraphCutSegmentationWidget::on_actionClearForegroundSelection_activated()
 {
   this->Sources.clear();
+  UpdateSelections();
+  Refresh();
 }
 
 void GraphCutSegmentationWidget::on_actionClearBackgroundSelection_activated()
 {
   this->Sinks.clear();
+  UpdateSelections();
+  Refresh();
 }
 
 void GraphCutSegmentationWidget::on_actionSaveForegroundSelection_activated()
@@ -488,7 +457,6 @@ void GraphCutSegmentationWidget::on_btnCut_clicked()
     }
 
   // Setup the graph cut from the GUI and the scribble selection
-  this->GraphCut.SetRGBWeight(sldRGBWeight->value() / 100.);
   this->GraphCut.SetLambda(ComputeLambda());
 
   this->GraphCut.SetSources(this->Sources);
@@ -511,6 +479,8 @@ void GraphCutSegmentationWidget::OpenFile(const std::string& fileName)
   this->Sources.clear();
   this->Sinks.clear();
 
+  this->ResultSlice->VisibilityOff();
+  
   // Read file
   itk::ImageFileReader<ImageType>::Pointer reader = itk::ImageFileReader<ImageType>::New();
   reader->SetFileName(fileName);
@@ -562,22 +532,55 @@ void GraphCutSegmentationWidget::Refresh()
 void GraphCutSegmentationWidget::on_actionExportSegmentedImage_triggered()
 {
   QString fileName = QFileDialog::getSaveFileName(this,
-    "Save Segmented Image", "segmented.mha", "Image Files (*.mha)");
+    "Save Segmented Image", "segmented.png", "Image Files (*.png)");
 
   if(fileName.isEmpty())
   {
     return;
   }
-  
-  ImageType::Pointer maskedImage = ImageType::New();
-  ITKHelpers::DeepCopy(this->GraphCut.GetImage(), maskedImage.GetPointer());
-  this->GraphCut.GetSegmentMask()->ApplyToImage(maskedImage.GetPointer());
 
-  //typedef  itk::ImageFileWriter< ImageAdaptorType > WriterType;
-  typedef  itk::ImageFileWriter<ImageType> WriterType;
+  Mask::Pointer mask = Mask::New();
+  ITKHelpers::DeepCopy(this->GraphCut.GetSegmentMask(), mask.GetPointer());
+
+  mask->KeepLargestHole();
+  //mask->Invert();
+
+  typedef itk::RGBAPixel<unsigned char> TransparentPixelType;
+  typedef itk::Image<TransparentPixelType, 2>  TransparentImageType;
+
+  TransparentImageType::Pointer transparentImage = TransparentImageType::New();
+  transparentImage->SetRegions(mask->GetLargestPossibleRegion());
+  transparentImage->Allocate();
+  
+  itk::ImageRegionIterator<TransparentImageType> imageIterator(transparentImage, transparentImage->GetLargestPossibleRegion());
+
+  while(!imageIterator.IsAtEnd())
+    {
+    TransparentImageType::PixelType pixel = imageIterator.Get();
+
+    if(mask->IsHole(imageIterator.GetIndex()))
+      {
+      pixel.SetRed(this->GraphCut.GetImage()->GetPixel(imageIterator.GetIndex())[0]);
+      pixel.SetGreen(this->GraphCut.GetImage()->GetPixel(imageIterator.GetIndex())[1]);
+      pixel.SetBlue(this->GraphCut.GetImage()->GetPixel(imageIterator.GetIndex())[2]);
+      pixel.SetAlpha(255); // Invisible
+      }
+    else
+      {
+      pixel.SetRed(0);
+      pixel.SetGreen(0);
+      pixel.SetBlue(0);
+      pixel.SetAlpha(0); // Visible
+      }
+    imageIterator.Set(pixel);
+
+    ++imageIterator;
+  }
+
+  typedef  itk::ImageFileWriter<TransparentImageType> WriterType;
   WriterType::Pointer writer = WriterType::New();
   writer->SetFileName(fileName.toStdString());
-  writer->SetInput(maskedImage);
+  writer->SetInput(transparentImage);
   writer->Update();
 }
 
@@ -660,8 +663,57 @@ void GraphCutSegmentationWidget::UpdateSelections()
   std::cout << this->Sources.size() << " sources." << std::endl;
   std::cout << this->Sinks.size() << " sinks." << std::endl;
 
-  //this->LeftSourceSinkImageSliceMapper->Modified();
-  //this->RightSourceSinkImageSliceMapper->Modified();
-
   this->Refresh();
+}
+
+void GraphCutSegmentationWidget::closeEvent(QCloseEvent *event)
+{
+  std::cout << "Closing..." << std::endl;
+  exit(0);
+}
+
+void GraphCutSegmentationWidget::on_btnHideStrokesLeft_clicked()
+{
+  this->LeftSourceSinkImageSlice->VisibilityOff();
+  Refresh();
+}
+
+void GraphCutSegmentationWidget::on_btnShowStrokesLeft_clicked()
+{
+  this->LeftSourceSinkImageSlice->VisibilityOn();
+  Refresh();
+}
+
+void GraphCutSegmentationWidget::on_btnHideStrokesRight_clicked()
+{
+  this->RightSourceSinkImageSlice->VisibilityOff();
+  Refresh();
+}
+
+void GraphCutSegmentationWidget::on_btnShowStrokesRight_clicked()
+{
+  this->RightSourceSinkImageSlice->VisibilityOn();
+  Refresh();
+}
+
+void GraphCutSegmentationWidget::on_actionExportScreenshotLeft_triggered()
+{
+  QString filename = QFileDialog::getSaveFileName(this, "Save PNG Screenshot", "", "PNG Files (*.png)");
+
+  if(filename.isEmpty())
+    {
+    return;
+    }
+
+  vtkSmartPointer<vtkWindowToImageFilter> windowToImageFilter =
+    vtkSmartPointer<vtkWindowToImageFilter>::New();
+  windowToImageFilter->SetInput(this->qvtkWidgetLeft->GetRenderWindow());
+  //windowToImageFilter->SetMagnification(3);
+  windowToImageFilter->Update();
+
+  vtkSmartPointer<vtkPNGWriter> writer =
+    vtkSmartPointer<vtkPNGWriter>::New();
+  writer->SetFileName(filename.toStdString().c_str());
+  writer->SetInputConnection(windowToImageFilter->GetOutputPort());
+  writer->Write();
 }

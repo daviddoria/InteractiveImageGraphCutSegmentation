@@ -430,12 +430,6 @@ double ImageGraphCut::ComputeNoise()
   return sigma;
 }
 
-
-void ImageGraphCut::SetRGBWeight(const float weight)
-{
-  this->RGBWeight = weight;
-}
-
 std::vector<itk::Index<2> > ImageGraphCut::GetSources()
 {
   return this->Sources;
