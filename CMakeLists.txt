@@ -12,12 +12,11 @@ QT4_WRAP_CPP(GraphCutSegmentationMOCSrcs GraphCutSegmentationWidget.h)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
-add_subdirectory(Helpers)
-add_subdirectory(ITKHelpers)
-add_subdirectory(VTKHelpers)
-add_subdirectory(ITKVTKHelpers)
+# Submodules
 add_subdirectory(Mask)
+add_subdirectory(ITKVTKHelpers)
 add_subdirectory(ScribbleInteractorStyle)
+add_subdirectory(VTKHelpers)
 
 FIND_PACKAGE(VTK REQUIRED)
 INCLUDE( ${USE_VTK_FILE} )
@@ -41,11 +40,11 @@ ImageGraphCut.cxx
 ${GraphCutSegmentationMOCSrcs} ${GraphCutSegmentationUISrcs})
 TARGET_LINK_LIBRARIES(InteractiveImageGraphCutSegmentation
 ${VTK_LIBRARIES} ${ITK_LIBRARIES}
-QVTK ${QT_LIBRARIES}
+${QT_LIBRARIES}
 MaxFlow
-libHelpers libITKHelpers libVTKHelpers libITKVTKHelpers libMask libScribble
+VTKHelpers ITKVTKHelpers Mask Scribble
 )
 
 ADD_EXECUTABLE(NonInteractive NonInteractive.cpp ImageGraphCut.cxx)
 TARGET_LINK_LIBRARIES(NonInteractive MaxFlow ${VTK_LIBRARIES} ${ITK_LIBRARIES}
-libHelpers libITKHelpers libVTKHelpers libITKVTKHelpers libMask)
+VTKHelpers ITKVTKHelpers Mask)

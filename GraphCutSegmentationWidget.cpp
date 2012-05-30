@@ -18,9 +18,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "GraphCutSegmentationWidget.h"
 
 // Submodules
-#include "Helpers/Helpers.h"
+#include "Mask/ITKHelpers/Helpers/Helpers.h"
 #include "ITKVTKHelpers/ITKVTKHelpers.h"
-#include "ITKHelpers/ITKHelpers.h"
+#include "Mask/ITKHelpers/ITKHelpers.h"
 #include "VTKHelpers/VTKHelpers.h"
 #include "Mask/Mask.h"
 

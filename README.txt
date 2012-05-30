@@ -3,6 +3,8 @@ Getting the code
 After you have cloned this repository, you will need to initialize the submodules:
 git submodule update --init --recursive
 
+If you ever update with 'git pull origin master', you must then do 'git submodule update --recursive'.
+
 Overview
 --------
 This software allows the user to "scribble" on the foreground and background of an image to seed a graph cuts based segmentation.

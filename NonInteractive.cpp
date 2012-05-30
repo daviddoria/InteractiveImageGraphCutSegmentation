@@ -1,8 +1,8 @@
 #include "ImageGraphCut.h"
 
 // Submodules
-#include "Helpers/Helpers.h"
-#include "ITKHelpers/ITKHelpers.h"
+#include "Mask/ITKHelpers/Helpers/Helpers.h"
+#include "Mask/ITKHelpers/ITKHelpers.h"
 
 #include "itkImage.h"
 #include "itkImageFileReader.h"

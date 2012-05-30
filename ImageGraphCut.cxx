@@ -18,8 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "ImageGraphCut.h"
 
 // Submodules
-#include "Helpers/Helpers.h"
-#include "ITKHelpers/ITKHelpers.h"
+#include "Mask/ITKHelpers/Helpers/Helpers.h"
+#include "Mask/ITKHelpers/ITKHelpers.h"
 
 // ITK
 #include "itkImageRegionIterator.h"
