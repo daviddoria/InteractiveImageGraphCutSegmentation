@@ -5,6 +5,9 @@ git submodule update --init --recursive
 
 If you ever update with 'git pull origin master', you must then do 'git submodule update --recursive'.
 
+This pulls in all of the dependencies including Mask, ITKHelpers, VTKHelpers, Helpers,
+ITKVTKHelpers, and ScribbleInteractorStle.
+
 Overview
 --------
 This software allows the user to "scribble" on the foreground and background of an image to seed a graph cuts based segmentation.
@@ -16,6 +19,12 @@ GPLv3 (See LICENSE.txt)
 
 Build notes
 ------------------
-- You must use the git version of VTK from at least December 01, 2010 due to the use of recent changes in vtkImageTracerWidget.
-- You must turn on ITK_USE_REVIEW in the ITK build because of the use of the new histogram/statistics classes
-- This software was developed using Qt 4.7.1
+This repository does not depend on any external libraries. The only caveat is that it depends
+on c++0x/11 parts of the c++ language. For Linux, this means it must be built with the flag
+gnu++0x. For Windows, we are working on finding the comparable solution/flag.
+
+Dependencies
+------------
+- VTK >= 6
+- ITK >= 4
+- Qt >= 4.7.1
