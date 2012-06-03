@@ -2,9 +2,16 @@ cmake_minimum_required(VERSION 2.6)
 
 Project(InteractiveImageGraphCutSegmentation)
 
+# We need to compile with c++11 functionality since it is
+# used by the Helpers subsubmodule.
 if(UNIX)
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=gnu++0x")
 endif(UNIX)
+
+# Turn off warnings seen in VS2010 in ITK code.
+if(WIN32)
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_SCL_SECURE_NO_WARNINGS")
+endif(WIN32)
 
 FIND_PACKAGE(Qt4 REQUIRED)
 INCLUDE(${QT_USE_FILE})
