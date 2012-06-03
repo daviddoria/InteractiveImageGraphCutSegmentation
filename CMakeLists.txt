@@ -42,19 +42,24 @@ if( "${ITK_VERSION_MAJOR}" LESS 4 )
   MESSAGE(FATAL_ERROR "You must build this code with ITK >= 4.0!")
 endif( "${ITK_VERSION_MAJOR}" LESS 4 )
 
-add_library(MaxFlow graph.cpp maxflow.cpp)
+add_library(KolmogorovMaxFlow graph.cpp maxflow.cpp)
+
+add_library(ImageGraphCut ImageGraphCut.cxx)
+
+ADD_EXECUTABLE(NonInteractive NonInteractive.cpp)
+TARGET_LINK_LIBRARIES(NonInteractive
+ImageGraphCut
+KolmogorovMaxFlow
+${VTK_LIBRARIES} ${ITK_LIBRARIES}
+VTKHelpers ITKVTKHelpers Mask)
 
 ADD_EXECUTABLE(InteractiveImageGraphCutSegmentation
 InteractiveGraphCutSegmentation.cpp GraphCutSegmentationWidget.cpp
-ImageGraphCut.cxx
 ${GraphCutSegmentationMOCSrcs} ${GraphCutSegmentationUISrcs})
 TARGET_LINK_LIBRARIES(InteractiveImageGraphCutSegmentation
-${VTK_LIBRARIES} ${ITK_LIBRARIES}
-${QT_LIBRARIES}
-MaxFlow
+${VTK_LIBRARIES} ${ITK_LIBRARIES} ${QT_LIBRARIES}
+ImageGraphCut
+KolmogorovMaxFlow
 VTKHelpers ITKVTKHelpers Mask Scribble
 )
 
-ADD_EXECUTABLE(NonInteractive NonInteractive.cpp ImageGraphCut.cxx)
-TARGET_LINK_LIBRARIES(NonInteractive MaxFlow ${VTK_LIBRARIES} ${ITK_LIBRARIES}
-VTKHelpers ITKVTKHelpers Mask)
