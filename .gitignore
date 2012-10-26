@@ -2,3 +2,4 @@
 *.ist
 *.sty
 *.brf
+.fuse_hidden*

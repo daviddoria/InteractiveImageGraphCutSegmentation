@@ -32,7 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QProgressDialog>
 
 // Custom
-#include "ImageGraphCut.h"
+#include "ImageGraphCutSegmentation/ImageGraphCut.h"
 
 // Submodules
 #include "ScribbleInteractorStyle/vtkInteractorStyleScribble.h"

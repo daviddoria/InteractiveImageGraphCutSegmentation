@@ -37,7 +37,7 @@ class vtkPolyData;
 #include "Types.h"
 
 // Kolmogorov's code
-#include "graph.h"
+#include "ImageGraphCutSegmentation/Kolmogorov/graph.h"
 typedef Graph GraphType;
 
 class ImageGraphCut

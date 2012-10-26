@@ -89,23 +89,9 @@ set(InteractiveImageGraphCutSegmentation_libraries ${InteractiveImageGraphCutSeg
 # Give the compiler all of the required include directories
 include_directories(${InteractiveImageGraphCutSegmentation_include_dirs})
 
-# Create Kolmogorov graph library
-add_library(KolmogorovMaxFlow graph.cpp maxflow.cpp)
-
-# Add the library to the list of libraries that are required to use this as a submodule.
-set(InteractiveImageGraphCutSegmentation_libraries ${InteractiveImageGraphCutSegmentation_libraries} KolmogorovMaxFlow)
-
-# Create graph library
-add_library(ImageGraphCut ImageGraphCut.cxx)
-target_link_libraries(ImageGraphCut ${InteractiveImageGraphCutSegmentation_libraries})
-
+add_subdirectory(ImageGraphCutSegmentation)
 # Add the library to the list of libraries that are required to use this as a submodule.
 set(InteractiveImageGraphCutSegmentation_libraries ${InteractiveImageGraphCutSegmentation_libraries} ImageGraphCut)
-
-ADD_EXECUTABLE(NonInteractive NonInteractive.cpp)
-TARGET_LINK_LIBRARIES(NonInteractive
-${VTK_LIBRARIES} ${ITK_LIBRARIES}
-${InteractiveImageGraphCutSegmentation_libraries})
 
 ADD_EXECUTABLE(InteractiveImageGraphCutSegmentation
 InteractiveGraphCutSegmentation.cpp GraphCutSegmentationWidget.cpp

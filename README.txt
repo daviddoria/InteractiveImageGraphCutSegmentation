@@ -5,8 +5,8 @@ git submodule update --init --recursive
 
 If you ever update with 'git pull origin master', you must then do 'git submodule update --recursive'.
 
-This pulls in all of the dependencies including Mask, ITKHelpers, VTKHelpers, Helpers,
-ITKVTKHelpers, and ScribbleInteractorStle.
+This pulls in all of the dependencies including Mask (which includes ITKHelpers and then Helpers), ITKVTKHelpers,
+VTKHelpers, and ScribbleInteractorStyle.
 
 Overview
 --------
@@ -15,7 +15,7 @@ This implementation is based on "Graph Cuts and Efficient N-D Image Segmentation
 
 License
 --------
-GPLv3 (See LICENSE.txt)
+GPLv3 (See LICENSE.txt). This is required because of the use of Kolmogorov's code.
 
 Build notes
 ------------------
