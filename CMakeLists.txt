@@ -94,7 +94,7 @@ endif()
 
 get_property(ITKVTKCameraIncludeDirs GLOBAL PROPERTY ITKVTKCameraIncludeDirs)
 set(InteractiveImageGraphCutSegmentation_include_dirs ${InteractiveImageGraphCutSegmentation_include_dirs} ${ITKVTKCameraIncludeDirs})
-get_property(VTKHelpersLibs GLOBAL PROPERTY ITKVTKCameraLibs)
+get_property(ITKVTKCameraLibs GLOBAL PROPERTY ITKVTKCameraLibs)
 set(InteractiveImageGraphCutSegmentation_libraries ${InteractiveImageGraphCutSegmentation_libraries} ${ITKVTKCameraLibs})
 
 # Give the compiler all of the required include directories

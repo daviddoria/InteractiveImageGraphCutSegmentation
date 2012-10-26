@@ -36,6 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // Submodules
 #include "ScribbleInteractorStyle/vtkInteractorStyleScribble.h"
+#include "ITKVTKCamera/ITKVTKCamera.h"
 
 // VTK
 class vtkImageSlice;
@@ -134,10 +135,6 @@ protected:
   /** Allows the background color to be changed*/
   double BackgroundColor[3];
 
-  /** Allows the image to be flipped so that it is "right side up"*/
-  double CameraLeftToRight[3];
-  double CameraBottomToTop[3];
-
   void SetupCameras();
   
   /** We set this when the image is opeend. We sometimes need to know how big the image is.*/
@@ -174,6 +171,9 @@ protected:
   void UpdateSelections();
 
   void closeEvent(QCloseEvent *);
+
+  ITKVTKCamera* LeftCamera = nullptr;
+  ITKVTKCamera* RightCamera = nullptr;
 };
 
 #endif

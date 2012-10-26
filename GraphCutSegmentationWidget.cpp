@@ -101,18 +101,6 @@ void GraphCutSegmentationWidget::SharedConstructor()
   connect( this->sldLambda, SIGNAL( valueChanged(int) ), this, SLOT(UpdateLambda()));
   connect( this->txtLambdaMax, SIGNAL( textEdited(QString) ), this, SLOT(UpdateLambda()));
 
-//   this->CameraUp[0] = 0;
-//   this->CameraUp[1] = 1;
-//   this->CameraUp[2] = 0;
-
-  CameraLeftToRight[0] = -1;
-  CameraLeftToRight[1] = 0;
-  CameraLeftToRight[2] = 0;
-  
-  CameraBottomToTop[0] = 0;
-  CameraBottomToTop[1] = 1;
-  CameraBottomToTop[2] = 0;
-
   SetupCameras();
 
   // Default GUI settings
@@ -129,7 +117,6 @@ void GraphCutSegmentationWidget::SharedConstructor()
   actionSaveSegmentation->setIcon(saveIcon);
   this->toolBar->addAction(actionSaveSegmentation);
 }
-
 
 void GraphCutSegmentationWidget::SetupBothPanes()
 {
@@ -183,10 +170,9 @@ void GraphCutSegmentationWidget::SetupLeftPane()
   this->GraphCutStyle->AddObserver(this->GraphCutStyle->ScribbleEvent,
                                    this, &GraphCutSegmentationWidget::ScribbleEventHandler);
   this->GraphCutStyle->SetCurrentRenderer(this->LeftRenderer);
-//  this->GraphCutStyle->InitializeTracer(this->LeftSourceSinkImageSlice); // We want to trace in the source/sink display layer. If we do this here, a pink cross is displayed when the program starts
 
-  // Without this, the flipping does not work until we interact with the image
-  this->GraphCutStyle->SetCurrentRenderer(this->LeftRenderer);
+  this->LeftCamera = new ITKVTKCamera(this->GraphCutStyle, this->LeftRenderer,
+                                      this->qvtkWidgetLeft->GetRenderWindow());
 }
 
 void GraphCutSegmentationWidget::SetupRightPane()
@@ -223,8 +209,9 @@ void GraphCutSegmentationWidget::SetupRightPane()
 
   this->RightRenderer->AddViewProp(this->RightStack);
 
+  this->RightCamera = new ITKVTKCamera(this->RightInteractorStyle, this->RightRenderer,
+                                       this->qvtkWidgetRight->GetRenderWindow());
 }
-
 
 void GraphCutSegmentationWidget::on_actionExit_triggered()
 {
@@ -233,9 +220,6 @@ void GraphCutSegmentationWidget::on_actionExit_triggered()
 
 void GraphCutSegmentationWidget::SetupCameras()
 {
-  this->GraphCutStyle->SetImageOrientation(CameraLeftToRight, CameraBottomToTop);
-  this->RightInteractorStyle->SetImageOrientation(CameraLeftToRight, CameraBottomToTop);
-
   this->LeftRenderer->ResetCamera();
   this->LeftRenderer->ResetCameraClippingRange();
 
@@ -247,14 +231,14 @@ void GraphCutSegmentationWidget::SetupCameras()
 
 void GraphCutSegmentationWidget::on_actionFlipImageVertically_triggered()
 {
-  CameraBottomToTop[1] *= -1;
-  SetupCameras();
+  this->LeftCamera->FlipVertically();
+  this->RightCamera->FlipVertically();
 }
 
 void GraphCutSegmentationWidget::on_actionFlipImageHorizontally_triggered()
 {
-  CameraLeftToRight[0] *= -1;
-  SetupCameras();
+  this->LeftCamera->FlipHorizontally();
+  this->RightCamera->FlipHorizontally();
 }
 
 void GraphCutSegmentationWidget::on_actionExportSegmentMask_triggered()
