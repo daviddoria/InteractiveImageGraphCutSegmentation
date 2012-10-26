@@ -601,10 +601,9 @@ void GraphCutSegmentationWidget::on_actionLoadForeground_triggered()
 
   std::vector<itk::Index<2> > pixels = ITKHelpers::GetNonZeroPixels(reader->GetOutput());
 
-  this->GraphCut.SetSources(pixels);
+  this->Sources=pixels;
 
-  Refresh();
-  
+  UpdateSelections();  
   std::cout << "Set " << pixels.size() << " new foreground pixels." << std::endl;
 }
 
@@ -625,9 +624,9 @@ void GraphCutSegmentationWidget::on_actionLoadBackground_triggered()
 
   std::vector<itk::Index<2> > pixels = ITKHelpers::GetNonZeroPixels(reader->GetOutput());
 
-  this->GraphCut.SetSinks(pixels);
+  this->Sinks=pixels;
 
-  Refresh();
+  UpdateSelections();
   std::cout << "Set " << pixels.size() << " new background pixels." << std::endl;
 }
 
