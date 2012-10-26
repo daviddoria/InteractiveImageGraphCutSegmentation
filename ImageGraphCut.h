@@ -40,45 +40,44 @@ class vtkPolyData;
 #include "graph.h"
 typedef Graph GraphType;
 
-// This is a special type to keep track of the graph node labels
-typedef itk::Image<void*, 2> NodeImageType;
-
-typedef itk::Statistics::Histogram< float,
-        itk::Statistics::DenseFrequencyContainer2 > HistogramType;
-
-
 class ImageGraphCut
 {
 public:
-  //void SetSources(vtkPolyData* sources);
-  //void SetSinks(vtkPolyData* sinks);
 
-  // Several initializations are done here
+  /** This is a special type to keep track of the graph node labels. */
+  typedef itk::Image<void*, 2> NodeImageType;
+
+  typedef itk::Statistics::Histogram< float,
+          itk::Statistics::DenseFrequencyContainer2 > HistogramType;
+
+  /** Several initializations are done here. */
   void SetImage(ImageType* const image);
 
+  /** Get the image that we are segmenting. */
   ImageType* GetImage();
 
-  // Create and cut the graph (The main driver function)
+  /** Create and cut the graph (The main driver function). */
   void PerformSegmentation();
 
-  // Return a list of the selected (via scribbling) pixels
+  /** Return a list of the selected (via scribbling) pixels. */
   std::vector<itk::Index<2> > GetSources();
   std::vector<itk::Index<2> > GetSinks();
 
-  // Set the selected (via scribbling) pixels
+  /** Set the selected pixels. */
   void SetSources(vtkPolyData* const sources);
   void SetSinks(vtkPolyData* const sinks);
 
+  /** Set the selected pixels. */
   void SetSources(const std::vector<itk::Index<2> >& sources);
   void SetSinks(const std::vector<itk::Index<2> >& sinks);
 
-  // Get the output of the segmentation
+  /** Get the output of the segmentation. */
   Mask* GetSegmentMask();
 
-  // Set the weight between the regional and boundary terms
+  /** Set the weight between the regional and boundary terms. */
   void SetLambda(const float);
 
-  // Set the number of bins per dimension of the foreground and background histograms
+  /** Set the number of bins per dimension of the foreground and background histograms. */
   void SetNumberOfHistogramBins(const int);
 
 protected:
@@ -107,6 +106,7 @@ protected:
   /** Determine if a number is NaN */
   bool IsNaN(const double a);
 
+  /** The relative weight of the RGB channels (assumed to be the first 3 channels) if the image has more than 3 channels. */
   float RGBWeight;
 
   // Typedefs
@@ -125,15 +125,18 @@ protected:
   /** Perform the s-t min cut */
   void CutGraph();
 
+  /** Compute the difference between two pixels. */
   float PixelDifference(const PixelType& a, const PixelType& b);
 
-  // Member variables */
+  /** The ITK data structure for storing the values that we will compute the histogram of. */
   SampleType::Pointer ForegroundSample;
   SampleType::Pointer BackgroundSample;
 
+  /** The histograms. */
   const HistogramType* ForegroundHistogram;
   const HistogramType* BackgroundHistogram;
 
+  /** ITK filters to create histograms. */
   SampleToHistogramFilterType::Pointer ForegroundHistogramFilter;
   SampleToHistogramFilterType::Pointer BackgroundHistogramFilter;
 
