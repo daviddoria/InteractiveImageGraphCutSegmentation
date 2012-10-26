@@ -86,6 +86,17 @@ set(InteractiveImageGraphCutSegmentation_include_dirs ${InteractiveImageGraphCut
 get_property(VTKHelpersLibs GLOBAL PROPERTY VTKHelpersLibs)
 set(InteractiveImageGraphCutSegmentation_libraries ${InteractiveImageGraphCutSegmentation_libraries} ${VTKHelpersLibs})
 
+# ITKVTKCamera
+get_property(FoundITKVTKCamera GLOBAL PROPERTY ITKVTKCameraIncludeDirs SET)
+if(NOT FoundITKVTKCamera)
+  add_subdirectory(ITKVTKCamera)
+endif()
+
+get_property(ITKVTKCameraIncludeDirs GLOBAL PROPERTY ITKVTKCameraIncludeDirs)
+set(InteractiveImageGraphCutSegmentation_include_dirs ${InteractiveImageGraphCutSegmentation_include_dirs} ${ITKVTKCameraIncludeDirs})
+get_property(VTKHelpersLibs GLOBAL PROPERTY ITKVTKCameraLibs)
+set(InteractiveImageGraphCutSegmentation_libraries ${InteractiveImageGraphCutSegmentation_libraries} ${ITKVTKCameraLibs})
+
 # Give the compiler all of the required include directories
 include_directories(${InteractiveImageGraphCutSegmentation_include_dirs})
 

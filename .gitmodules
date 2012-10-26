@@ -10,3 +10,6 @@
 [submodule "ScribbleInteractorStyle"]
 	path = ScribbleInteractorStyle
 	url = https://github.com/daviddoria/ScribbleInteractorStyle.git
+[submodule "ITKVTKCamera"]
+	path = ITKVTKCamera
+	url = https://github.com/daviddoria/ITKVTKCamera.git
