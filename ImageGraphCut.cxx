@@ -435,7 +435,7 @@ double ImageGraphCut::ComputeNoise()
   return sigma;
 }
 
-std::vector<itk::Index<2> > ImageGraphCut::GetSources()
+ImageGraphCut::IndexContainer ImageGraphCut::GetSources()
 {
   return this->Sources;
 }
@@ -455,7 +455,7 @@ Mask* ImageGraphCut::GetSegmentMask()
   return this->SegmentMask;
 }
 
-std::vector<itk::Index<2> > ImageGraphCut::GetSinks()
+ImageGraphCut::IndexContainer ImageGraphCut::GetSinks()
 {
   return this->Sinks;
 }
@@ -511,12 +511,12 @@ void ImageGraphCut::SetSinks(vtkPolyData* const sinks)
 
 }
 
-void ImageGraphCut::SetSources(const std::vector<itk::Index<2> >& sources)
+void ImageGraphCut::SetSources(const IndexContainer& sources)
 {
   this->Sources = sources;
 }
 
-void ImageGraphCut::SetSinks(const std::vector<itk::Index<2> >& sinks)
+void ImageGraphCut::SetSinks(const IndexContainer& sinks)
 {
   this->Sinks = sinks;
 }
