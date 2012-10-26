@@ -47,8 +47,12 @@ public:
   /** This is a special type to keep track of the graph node labels. */
   typedef itk::Image<void*, 2> NodeImageType;
 
+  /** The type of the histograms. */
   typedef itk::Statistics::Histogram< float,
           itk::Statistics::DenseFrequencyContainer2 > HistogramType;
+
+  /** The type of a list of pixels/indexes. */
+  typedef std::vector<itk::Index<2> > IndexContainer;
 
   /** Several initializations are done here. */
   void SetImage(ImageType* const image);
@@ -60,16 +64,16 @@ public:
   void PerformSegmentation();
 
   /** Return a list of the selected (via scribbling) pixels. */
-  std::vector<itk::Index<2> > GetSources();
-  std::vector<itk::Index<2> > GetSinks();
+  IndexContainer GetSources();
+  IndexContainer GetSinks();
 
   /** Set the selected pixels. */
   void SetSources(vtkPolyData* const sources);
   void SetSinks(vtkPolyData* const sinks);
 
   /** Set the selected pixels. */
-  void SetSources(const std::vector<itk::Index<2> >& sources);
-  void SetSinks(const std::vector<itk::Index<2> >& sinks);
+  void SetSources(const IndexContainer& sources);
+  void SetSinks(const IndexContainer& sinks);
 
   /** Get the output of the segmentation. */
   Mask* GetSegmentMask();
@@ -89,10 +93,10 @@ protected:
   Mask::Pointer SegmentMask;
 
   /** User specified foreground points */
-  std::vector<itk::Index<2> > Sources;
+  IndexContainer Sources;
 
   /** User specified background points */
-  std::vector<itk::Index<2> > Sinks;
+  IndexContainer Sinks;
 
   /** The weighting between unary and binary terms */
   float Lambda;
