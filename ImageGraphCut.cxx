@@ -311,8 +311,13 @@ void ImageGraphCut::CreateGraph()
       measurementVector[i] = pixel[i];
       }
 
-    float sinkHistogramValue = this->BackgroundHistogram->GetFrequency(this->BackgroundHistogram->GetIndex(measurementVector));
-    float sourceHistogramValue = this->ForegroundHistogram->GetFrequency(this->ForegroundHistogram->GetIndex(measurementVector));
+    HistogramType::IndexType backgroundIndex;
+    this->BackgroundHistogram->GetIndex(measurementVector, backgroundIndex);
+    float sinkHistogramValue = this->BackgroundHistogram->GetFrequency(backgroundIndex);
+
+    HistogramType::IndexType foregroundIndex;
+    this->ForegroundHistogram->GetIndex(measurementVector, foregroundIndex);
+    float sourceHistogramValue = this->ForegroundHistogram->GetFrequency(foregroundIndex);
 
     // Conver the histogram value/frequency to make it as if it came from a normalized histogram
     sinkHistogramValue /= this->BackgroundHistogram->GetTotalFrequency();
