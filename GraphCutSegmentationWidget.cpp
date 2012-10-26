@@ -183,7 +183,7 @@ void GraphCutSegmentationWidget::SetupLeftPane()
   this->GraphCutStyle->AddObserver(this->GraphCutStyle->ScribbleEvent,
                                    this, &GraphCutSegmentationWidget::ScribbleEventHandler);
   this->GraphCutStyle->SetCurrentRenderer(this->LeftRenderer);
-  this->GraphCutStyle->InitializeTracer(this->LeftSourceSinkImageSlice); // We want to trace in the source/sink display layer
+//  this->GraphCutStyle->InitializeTracer(this->LeftSourceSinkImageSlice); // We want to trace in the source/sink display layer. If we do this here, a pink cross is displayed when the program starts
 
   // Without this, the flipping does not work until we interact with the image
   this->GraphCutStyle->SetCurrentRenderer(this->LeftRenderer);
@@ -228,7 +228,7 @@ void GraphCutSegmentationWidget::SetupRightPane()
 
 void GraphCutSegmentationWidget::on_actionExit_triggered()
 {
-  exit(0);
+  QApplication::quit();
 }
 
 void GraphCutSegmentationWidget::SetupCameras()
@@ -518,6 +518,8 @@ void GraphCutSegmentationWidget::OpenFile(const std::string& fileName)
     }
 
   this->AlreadySegmented = false;
+
+  this->GraphCutStyle->InitializeTracer(this->LeftSourceSinkImageSlice);
   //std::cout << "Exit OpenFile()" << std::endl;
 }
 
@@ -665,10 +667,9 @@ void GraphCutSegmentationWidget::UpdateSelections()
   this->Refresh();
 }
 
-void GraphCutSegmentationWidget::closeEvent(QCloseEvent *event)
+void GraphCutSegmentationWidget::closeEvent(QCloseEvent *)
 {
-  std::cout << "Closing..." << std::endl;
-  exit(0);
+  QApplication::quit();
 }
 
 void GraphCutSegmentationWidget::on_btnHideStrokesLeft_clicked()

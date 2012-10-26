@@ -173,7 +173,7 @@ protected:
   
   void UpdateSelections();
 
-  void closeEvent(QCloseEvent *event);
+  void closeEvent(QCloseEvent *);
 };
 
 #endif
