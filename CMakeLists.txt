@@ -18,6 +18,8 @@ endif(WIN32)
 FIND_PACKAGE(Qt4 REQUIRED)
 INCLUDE(${QT_USE_FILE})
 
+set(InteractiveImageGraphCutSegmentation_libraries ${InteractiveImageGraphCutSegmentation_libraries} ${QT_LIBRARIES})
+
 QT4_WRAP_UI(GraphCutSegmentationUISrcs GraphCutSegmentationWidget.ui)
 QT4_WRAP_CPP(GraphCutSegmentationMOCSrcs GraphCutSegmentationWidget.h)
 
@@ -32,6 +34,8 @@ if( "${VTK_MAJOR_VERSION}" LESS 6 )
   MESSAGE(FATAL_ERROR "You must build this code with VTK >= 6.0!")
 endif( "${VTK_MAJOR_VERSION}" LESS 6 )
 
+set(InteractiveImageGraphCutSegmentation_libraries ${InteractiveImageGraphCutSegmentation_libraries} ${VTK_LIBRARIES})
+
 # ITK
 FIND_PACKAGE(ITK REQUIRED)
 INCLUDE( ${USE_ITK_FILE} )
@@ -40,6 +44,7 @@ if( "${ITK_VERSION_MAJOR}" LESS 4 )
   MESSAGE(FATAL_ERROR "You must build this code with ITK >= 4.0!")
 endif( "${ITK_VERSION_MAJOR}" LESS 4 )
 
+set(InteractiveImageGraphCutSegmentation_libraries ${InteractiveImageGraphCutSegmentation_libraries} ${ITK_LIBRARIES})
 
 # Submodules
 # Mask
@@ -97,18 +102,25 @@ set(InteractiveImageGraphCutSegmentation_include_dirs ${InteractiveImageGraphCut
 get_property(ITKVTKCameraLibs GLOBAL PROPERTY ITKVTKCameraLibs)
 set(InteractiveImageGraphCutSegmentation_libraries ${InteractiveImageGraphCutSegmentation_libraries} ${ITKVTKCameraLibs})
 
+# ImageGraphCutSegmentation
+get_property(FoundImageGraphCutSegmentation GLOBAL PROPERTY ImageGraphCutSegmentationIncludeDirs SET)
+if(NOT FoundImageGraphCutSegmentation)
+  add_subdirectory(ImageGraphCutSegmentation)
+endif()
+
+get_property(ImageGraphCutSegmentationIncludeDirs GLOBAL PROPERTY ImageGraphCutSegmentationIncludeDirs)
+set(InteractiveImageGraphCutSegmentation_include_dirs ${InteractiveImageGraphCutSegmentation_include_dirs} ${ImageGraphCutSegmentationIncludeDirs})
+get_property(ImageGraphCutSegmentationLibs GLOBAL PROPERTY ImageGraphCutSegmentationLibs)
+set(InteractiveImageGraphCutSegmentation_libraries ${InteractiveImageGraphCutSegmentation_libraries} ${ImageGraphCutSegmentationLibs})
+
 # Give the compiler all of the required include directories
 include_directories(${InteractiveImageGraphCutSegmentation_include_dirs})
 
-add_subdirectory(ImageGraphCutSegmentation)
-# Add the library to the list of libraries that are required to use this as a submodule.
-set(InteractiveImageGraphCutSegmentation_libraries ${InteractiveImageGraphCutSegmentation_libraries} ImageGraphCut)
-
+# Build the executable
 ADD_EXECUTABLE(InteractiveImageGraphCutSegmentation
 InteractiveGraphCutSegmentation.cpp GraphCutSegmentationWidget.cpp
 ${GraphCutSegmentationMOCSrcs} ${GraphCutSegmentationUISrcs})
 TARGET_LINK_LIBRARIES(InteractiveImageGraphCutSegmentation
-${VTK_LIBRARIES} ${ITK_LIBRARIES} ${QT_LIBRARIES}
 ${InteractiveImageGraphCutSegmentation_libraries}
 )
 

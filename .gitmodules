@@ -13,3 +13,6 @@
 [submodule "ITKVTKCamera"]
 	path = ITKVTKCamera
 	url = https://github.com/daviddoria/ITKVTKCamera.git
+[submodule "ImageGraphCutSegmentation"]
+	path = ImageGraphCutSegmentation
+	url = https://github.com/daviddoria/ImageGraphCutSegmentation.git
