@@ -382,17 +382,14 @@ void GraphCutSegmentationWidget::on_actionSaveForegroundSelection_activated()
   }
   std::cout << "Writing to " << fileName.toStdString() << std::endl;
 
+  typedef itk::Image<unsigned char, 2> UnsignedCharScalarImageType;
   UnsignedCharScalarImageType::Pointer foregroundImage = UnsignedCharScalarImageType::New();
   foregroundImage->SetRegions(this->ImageRegion);
   foregroundImage->Allocate();
   
   ITKHelpers::IndicesToBinaryImage(this->Sources, foregroundImage);
 
-  typedef  itk::ImageFileWriter< UnsignedCharScalarImageType  > WriterType;
-  WriterType::Pointer writer = WriterType::New();
-  writer->SetFileName(fileName.toStdString());
-  writer->SetInput(foregroundImage);
-  writer->Update();
+  ITKHelpers::WriteImage(foregroundImage.GetPointer(), fileName.toStdString());
 }
 
 
@@ -413,18 +410,14 @@ void GraphCutSegmentationWidget::on_actionSaveBackgroundSelection_activated()
   
   std::cout << "Writing to " << fileName.toStdString() << std::endl;
 
-  typedef  itk::ImageFileWriter< UnsignedCharScalarImageType  > WriterType;
-  WriterType::Pointer writer = WriterType::New();
-
+  typedef itk::Image<unsigned char, 2> UnsignedCharScalarImageType;
   UnsignedCharScalarImageType::Pointer backgroundImage = UnsignedCharScalarImageType::New();
   backgroundImage->SetRegions(this->ImageRegion);
   backgroundImage->Allocate();
   
   ITKHelpers::IndicesToBinaryImage(this->Sinks, backgroundImage);
 
-  writer->SetFileName(fileName.toStdString());
-  writer->SetInput(backgroundImage);
-  writer->Update();
+  ITKHelpers::WriteImage(backgroundImage.GetPointer(), fileName.toStdString());
 }
 
 void GraphCutSegmentationWidget::on_btnCut_clicked()
@@ -447,7 +440,7 @@ void GraphCutSegmentationWidget::on_btnCut_clicked()
   this->GraphCut.SetSinks(this->Sinks);
 
   /////////////
-  QFuture<void> future = QtConcurrent::run(this->GraphCut, &ImageGraphCut::PerformSegmentation);
+  QFuture<void> future = QtConcurrent::run(this->GraphCut, &ImageGraphCut<ImageType>::PerformSegmentation);
   this->FutureWatcher.setFuture(future);
 
   this->ProgressDialog->setMinimum(0);

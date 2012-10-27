@@ -129,8 +129,9 @@ protected:
   /** Refresh both renderers and render windows */
   void Refresh();
 
-  /** The main segmentation class.  */
-  ImageGraphCut GraphCut;
+  /** The main segmentation class. */
+  typedef itk::VectorImage<float,2> ImageType;
+  ImageGraphCut<ImageType> GraphCut;
 
   /** Allows the background color to be changed*/
   double BackgroundColor[3];
