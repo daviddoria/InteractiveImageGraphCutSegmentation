@@ -78,7 +78,7 @@ We have implemented the algorithm described in \cite{boykov2006}. The basic work
 \item Iteratively refine
 \end{itemize}
 
-Our implementation uses techniques of Generic Programming (template classes and template functions) to allow images with arbitrary pixel types to be segmented. We provide explicit instantiations for 1-channel (grayscale) images and 3-channel (RGB) images.
+Our implementation can operate on images with arbitrary pixel types. That is, we can operate on grayscale images, RGB images, or N-D images, each with components of any scalar type.
 
 %%%%%%%%%%%%%%%%
 \section{Segmentation Algorithm}
@@ -137,9 +137,9 @@ When $\lambda$ is high, there is no regularization. That it, each pixel decides 
 \subsection{Structure}
 Our code has three main components: 
 \begin{itemize}
-\item The GUI (form.h, form.cpp)
-\item The ``Scribbling'' code (vtkGraphCutInteractorStyle.h, vtkGraphCutInteractorStyle.cxx)
-\item The graph cut segmentation code (ImageGraphCutBase.h, ImageGraphCutBase.cpp, ImageGraphCut.h, ImageGraphCut.cpp)
+\item The GUI (GraphCutSegmentationWidget.h, GraphCutSegmentationWidget.cpp, GraphCutSegmentationWidget.ui)
+\item The ``scribbling'' code (in a submodule called ScribbleInteractorStyle)
+\item The graph cut segmentation code (in a submodule called ImageGraphCutSegmentation)
 \end{itemize}
  
 \subsection{GUI}
@@ -155,12 +155,12 @@ On the right of the form, a window is provided to view the result of the segment
 A slider allows the user to set the $NumberOfHistogramBins$ to use when constructing the foreground and background histograms.
 
 \subsection{Scribbling}
-To perform the scribbling, we use a vtkImageTracerWidget. Foreground scribbles are displayed in green while background scribbles are displayed in red. The vtkGraphCutInteractorStyle contains the vtkImageTracerWidget and keeps track of the scribbles that the user has input. We convert the list of points in the vtkPolyData returned by the vtkImageTracerWidget into a
+To perform the scribbling, we use a vtkImageTracerWidget under the hood. Foreground scribbles are displayed in green while background scribbles are displayed in red. The vtkInteractorStyleScribble contains the vtkImageTracerWidget and provides the GraphCutSegmentationWidget with the scribbles that the user has input. We convert the list of points in the vtkPolyData returned by the vtkImageTracerWidget into a
 \begin{verbatim}
 std::vector<itk::Index<2> > 
 \end{verbatim}
 
-for both the Sources and Sinks (members of the ImageGraphCutBase).
+for both the Sources and Sinks (members of the ImageGraphCutBase). Since the vtkImageTracerWidget operates in a real coordinate space (non-discrete, non-pixel space), and does not guarantee a particular spacing of the points on the curve, we compute Bresenham lines between all adjacent points in the (ordered) list of points from the tracer to produce the list of pixels that lie under the stroke.
 
 \subsection{ImageGraphCut}
 The function of this class is to create the graph which will be fed to Kolmogorov's S-T min-cut implementation. The structure of the graph is a uniform (regular) grid of 4-connected nodes (the pixels). The edge weights between these nodes are called ``n-weighs''.  Additionally, each pixel is connected to both a synthetic foreground node and a synthetic background node. Each of these edges is weighted with a ``t-weight''.
