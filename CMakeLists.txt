@@ -47,17 +47,6 @@ endif( "${ITK_VERSION_MAJOR}" LESS 4 )
 set(InteractiveImageGraphCutSegmentation_libraries ${InteractiveImageGraphCutSegmentation_libraries} ${ITK_LIBRARIES})
 
 # Submodules
-# Mask
-get_property(FoundMask GLOBAL PROPERTY MaskIncludeDirs SET)
-if(NOT FoundMask)
-  add_subdirectory(Mask)
-endif()
-
-get_property(MaskIncludeDirs GLOBAL PROPERTY MaskIncludeDirs)
-set(InteractiveImageGraphCutSegmentation_include_dirs ${InteractiveImageGraphCutSegmentation_include_dirs} ${MaskIncludeDirs})
-get_property(MaskLibs GLOBAL PROPERTY MaskLibs)
-set(InteractiveImageGraphCutSegmentation_libraries ${InteractiveImageGraphCutSegmentation_libraries} ${MaskLibs})
-
 # ITKVTKHelpers
 get_property(FoundITKVTKHelpers GLOBAL PROPERTY ITKVTKHelpersIncludeDirs SET)
 if(NOT FoundITKVTKHelpers)

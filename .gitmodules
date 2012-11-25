@@ -4,9 +4,6 @@
 [submodule "ITKVTKHelpers"]
 	path = ITKVTKHelpers
 	url = https://github.com/daviddoria/ITKVTKHelpers.git
-[submodule "Mask"]
-	path = Mask
-	url = https://github.com/daviddoria/Mask.git
 [submodule "ScribbleInteractorStyle"]
 	path = ScribbleInteractorStyle
 	url = https://github.com/daviddoria/ScribbleInteractorStyle.git
