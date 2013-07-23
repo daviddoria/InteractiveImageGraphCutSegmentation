@@ -21,10 +21,18 @@ Build notes
 ------------------
 This repository does not depend on any external libraries. The only caveat is that it depends
 on c++0x/11 parts of the c++ language. For Linux, this means it must be built with the flag
-gnu++0x. For Windows, we are working on finding the comparable solution/flag.
+gnu++11. For Windows (Visual , we are working on finding the comparable solution/flag.
 
 Dependencies
 ------------
 - VTK >= 6
+Must be configured with VTK_Group_Qt=ON.
+
 - ITK >= 4
+Must be configured with c++11 eneabled. To do this, you must add -std=gnu++11 to CMAKE_CXX_FLAGS when you configure ITK:
+
+ccmake ~/src/ITK -DCMAKE_CXX_FLAGS=-std=gnu++11
+
+NOTE: you cannot configure (ccmake) and THEN set CMAKE_CXX_FLAGS - you MUST include the gnu++11 in the ccmake command the very first time it is run.
+
 - Qt >= 4.7.1
